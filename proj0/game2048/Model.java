@@ -94,14 +94,18 @@ public class Model extends Observable {
         setChanged();
     }
 
-    /**
-     * 将棋盘向某个方向倾斜。
-     * 核心逻辑：
-     * 1. 保存当前棋盘的快照 (savedState)，用于判断合并条件（只和原始值合并）。
-     * 2. 对每一列，从上往下 (Row 1 -> Row 3) 遍历。
-     * 3. 只要上方有空位，就一直往上移 (Move to 0)。
-     * 4. 如果上方有障碍，检查 savedState 是否允许合并。
-     */
+    /** Tilt the board toward SIDE. Return true iff this changes the board.
+     *
+     * 1. If two Tile objects are adjacent in the direction of motion and have
+     *    the same value, they are merged into one Tile of twice the original
+     *    value and that new value is added to the score instance variable
+     * 2. A tile that is the result of a merge will not merge again on that
+     *    tilt. So each move, every tile will only ever be part of at most one
+     *    merge (perhaps zero).
+     * 3. When three adjacent tiles in the direction of motion have the same
+     *    value, then the leading two tiles in the direction of motion merge,
+     *    and the trailing tile does not.
+     * */
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
@@ -109,6 +113,7 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+
         board.setViewingPerspective(side);
         for(int col=0;col<board.size();col++){
             if(deal_one_column(col)){
