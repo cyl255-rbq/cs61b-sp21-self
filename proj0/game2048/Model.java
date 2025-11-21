@@ -1,6 +1,5 @@
 package game2048;
 
-import java.security.KeyStore;
 import java.util.Formatter;
 import java.util.Observable;
 
@@ -95,18 +94,14 @@ public class Model extends Observable {
         setChanged();
     }
 
-    /** Tilt the board toward SIDE. Return true iff this changes the board.
-     *
-     * 1. If two Tile objects are adjacent in the direction of motion and have
-     *    the same value, they are merged into one Tile of twice the original
-     *    value and that new value is added to the score instance variable
-     * 2. A tile that is the result of a merge will not merge again on that
-     *    tilt. So each move, every tile will only ever be part of at most one
-     *    merge (perhaps zero).
-     * 3. When three adjacent tiles in the direction of motion have the same
-     *    value, then the leading two tiles in the direction of motion merge,
-     *    and the trailing tile does not.
-     * */
+    /**
+     * 将棋盘向某个方向倾斜。
+     * 核心逻辑：
+     * 1. 保存当前棋盘的快照 (savedState)，用于判断合并条件（只和原始值合并）。
+     * 2. 对每一列，从上往下 (Row 1 -> Row 3) 遍历。
+     * 3. 只要上方有空位，就一直往上移 (Move to 0)。
+     * 4. 如果上方有障碍，检查 savedState 是否允许合并。
+     */
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
@@ -114,10 +109,53 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        board.setViewingPerspective(side);
+        for(int col=0;col<board.size();col++){
+            if(deal_one_column(col)){
+                changed = true;
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
+        }
+        return changed;
+    }
+    public int find_before_row(int col,int row){
+        for (row=row+1;row<board.size();row++){
+            if(board.tile(col,row)!=null)return row;
+        }
+        return board.size();
+    }
+    public boolean deal_one_column(int col){
+        boolean changed = false;
+        boolean merged=false;
+        for(int row = board.size()-1; row >= 0; row--){
+            if(row == board.size()-1) continue;
+            Tile tile_now = board.tile(col, row);
+            if (tile_now == null) continue;
+            int fail_find=board.size();
+            int find_out=find_before_row(col,row);
+            if(find_out!=fail_find){
+                if(tile_now.value()==board.tile(col,find_out).value() && !merged){
+                    board.move(col,find_out,tile_now);
+                    score+=2*tile_now.value();
+                    merged=true;
+                    changed=true;
+                }
+                else {
+                    if(row!=find_out-1){
+                        board.move(col,find_out-1,tile_now);
+                        merged=false;
+                        changed=true;
+                    }
+                }
+            }
+            else {
+                board.move(col,board.size()-1,tile_now);
+                changed=true;
+            }
         }
         return changed;
     }
@@ -183,10 +221,10 @@ public class Model extends Observable {
                 }
                 else {
                     int me = b.tile(i,j).value();
-                    if((j-1>=0 && b.tile(i,j-1).value()==me)||
-                      (j+1<b.size() && b.tile(i,j+1).value()==me)||
-                      (i-1>=0 && b.tile(i-1,j).value()==me)||
-                      (i+1<b.size() && b.tile(i+1,j).value()==me))
+                    if((j-1>=0 && b.tile(i,j-1)!=null && b.tile(i,j-1).value()==me)||
+                      (j+1<b.size() && b.tile(i,j+1)!=null && b.tile(i,j+1).value()==me)||
+                      (i-1>=0 && b.tile(i-1,j)!=null && b.tile(i-1,j).value()==me)||
+                      (i+1<b.size() && b.tile(i+1,j)!=null && b.tile(i+1,j).value()==me))
                     {
                         return true;
                     }
