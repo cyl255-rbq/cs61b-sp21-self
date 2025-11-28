@@ -5,11 +5,11 @@ public class LinkedListDeque<T> {
     private static class IntNode<T>{
         public T item;
         public IntNode<T> next;
-        public IntNode<T> previous;
+        public IntNode<T> prev;
         public IntNode(T i, IntNode<T> n, IntNode<T> m){
             item = i;
             next = n;
-            previous = m;
+            prev = m;
         }
     }
     private IntNode<T> sentinel;
@@ -18,27 +18,27 @@ public class LinkedListDeque<T> {
     public LinkedListDeque(){
         sentinel = new IntNode<>(null, null, null);
         sentinel.next = sentinel;
-        sentinel.previous = sentinel;
+        sentinel.prev = sentinel;
         size = 0;
     }
 
     public LinkedListDeque(T x){
         sentinel = new IntNode<>(null, null, null);
         sentinel.next = new IntNode<>(x, sentinel, sentinel);
-        sentinel.previous = sentinel.next;
+        sentinel.prev = sentinel.next;
         size = 1;
     }
 
     public void addFirst(T item){
         IntNode<T> temp = sentinel.next;
         sentinel.next = new IntNode<>(item, temp, sentinel);
-        temp.previous = sentinel.next;
+        temp.prev = sentinel.next;
         size += 1;
     }
 
     public void addLast(T item){
-        sentinel.previous.next = new IntNode<>(item, sentinel, sentinel.previous);
-        sentinel.previous = sentinel.previous.next;
+        sentinel.prev.next = new IntNode<>(item, sentinel, sentinel.prev);
+        sentinel.prev = sentinel.prev.next;
         size += 1;
     }
 
@@ -62,15 +62,15 @@ public class LinkedListDeque<T> {
         IntNode<T> temp = sentinel.next;
         if(temp == sentinel)return null;
         sentinel.next = temp.next;
-        temp.next.previous = sentinel;
+        temp.next.prev = sentinel;
         return temp.item;
     }
 
     public T removeLast(){
-        IntNode<T> temp = sentinel.previous;
+        IntNode<T> temp = sentinel.prev;
         if(temp == sentinel)return null;
-        sentinel.previous = temp.previous;
-        temp.previous.next = sentinel;
+        sentinel.prev = temp.prev;
+        temp.prev.next = sentinel;
         return temp.item;
     }
 

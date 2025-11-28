@@ -13,33 +13,29 @@ public class ArrayDeque<T> {
          size = 0;
     }
 
-    private void addResize(int Capacity){
+    private void resize(int Capacity){
         T[] temp = (T[]) new Object[Capacity];
-        System.arraycopy(items, nextFirst+1, temp, 0, size-(nextFirst+1));
-        System.arraycopy(items, 0, temp, size-nextFirst, nextFirst+1);
+        if((nextFirst+1)>=(nextLast-1)){
+            System.arraycopy(items, nextFirst+1, temp, 0, items.length-(nextFirst+1));
+            System.arraycopy(items, 0, temp, items.length-(nextFirst+1), nextLast);
+        }
+        else System.arraycopy(items, nextFirst+1, temp, 0, nextLast-nextFirst-1);
         items = temp;
         nextFirst = items.length-1;
         nextLast = size;
     }
 
-    private void removeResize(int Capacity){
-        if(nextFirst>nextLast) addResize(Capacity);
-        else {
-            T[] temp = (T[]) new Object[Capacity];
-            System.arraycopy(items, nextFirst, temp, 0, nextLast-nextFirst-1);
-        }
-    }
-
     private void addJudgment(){
         if(size == items.length){
-            addResize(2*size);
+            resize(2*items.length);
         }
     }
 
     private void removeJudgment(){
+        if (items.length<=32)return;
         double itemsLength = items.length;
         if(size/itemsLength < 0.25){
-            removeResize(size/2);
+            resize(items.length/2);
         }
     }
 
@@ -67,6 +63,12 @@ public class ArrayDeque<T> {
         return size;
     }
 
+    public void printDeque(){
+        for(int i=0;i<size;i++)
+            System.out.print(items[i]+" ");
+        System.out.println();
+    }
+
     public T removeFirst(){
         removeJudgment();
         nextFirst += 1;
@@ -88,7 +90,8 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index){
-
+        if(index>=size)return null;
+        return items[index];
     }
 
 
