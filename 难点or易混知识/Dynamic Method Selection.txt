@@ -1,0 +1,73 @@
+
+Modify the code below so that the max method of DMSList works properly. As-
+sume all numbers inserted into DMSList are positive, and we only insert using
+insertFront. You may not change anything in the given code. You may only fill
+in blanks. You may not need all blanks. (Spring ’16, MT1)
+public class DMSList {
+	private IntNode sentinel;
+	public DMSList() {
+		sentinel = new IntNode(-1000,new List2());
+	}
+	public class IntNode {
+		public int item;
+		public IntNode next;
+		public IntNode(int i, IntNode h) {
+			item = i;
+			next = h;
+		}
+		public int max() {
+			return Math.max(item, next.max());
+		}
+	}
+	public class List2 extends IntNode { // 继承 IntNode
+    		public List2() { // 构造函数
+        		super(0, null); // 应付父类的构造要求
+	    	}
+  		@Override
+    		public int max() { // 核心逻辑
+        		return 0; // 遇到我就返回 0，停止递归
+    		}
+	}____________________________________________________
+	/* Returns 0 if list is empty. Otherwise, returns the max element. */
+	public int max() {
+		return sentinel.next.max();
+	}
+	public void insertFront(int x) { sentinel.next = new IntNode(x, sentinel.next); }
+}
+你的代码： sentinel = new IntNode(-1000, List2(0,null));
+问题：Java 创建对象必须用 new 关键字。而且通常我们为了让代码更简洁，不需要给这个无用的“终点节点”传参数（反正它的值不重要）。
+你的 List2 定义逻辑是对的，但为了配合上面的修正（让 new List2() 更简单），我们可以把构造函数里的废话去掉。
+你的写法（逻辑没问题，就是调用起来麻烦，必须传 0 和 null）：
+Java
+public class List2 extends IntNode {
+    public List2(int i, IntNode h) {
+        super(i, h); // 硬传参数给父类
+    }
+    // ... max ...
+}
+更优雅的写法（推荐）： 既然这个节点是用来做“哨兵/终点”的，它存什么数字根本不重要。我们直接在构造函数里帮它填好假数据，这样外面调用时就不用管了。
+Java
+    // 无参构造函数
+    public List2() {
+        // 直接调用父类构造函数，填入随便什么占位符(0, null)
+        super(0, null); 
+    }
+}
+
+1. 为什么必须写 new？
+在 Java 中，类（Class） 只是一个图纸（或者模具）。
+    List2 = 一张画着节点的图纸。
+如果你直接写 List2()（不加 new）：
+    Java 编译器会以为你是在调用一个名字叫 List2 的普通方法（Method）。
+    它会去代码里找：public void List2() { ... }。
+    它当然找不到，因为 List2 是个类名，不是方法名。即使找到了，普通方法也变不出一个对象来。
+当你写 new List2()：
+    Java 知道了：“哦！你是想根据 List2 这张图纸，在内存里开辟一块空间，实实在在地造一个对象出来！
+2. 只有一种情况不用 new
+你可能被 Python 或者 C++ 的栈对象 搞混了。
+    Python: node = List2() (不需要 new)
+    Java: node = new List2() (必须有 new)
+在 Java 里，除了基本数据类型（int, boolean, double...）和字符串字面量（"hello"）之外，凡是想造对象，必须用 new。
+3. 看你的代码上下文
+请看这一行代码的前半部分： sentinel = new IntNode(-1000, ...);
+你看，前面的 IntNode 都用了 new，那么作为参数传进去的 List2 也是一个对象，自然也要用 new。

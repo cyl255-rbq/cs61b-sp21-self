@@ -1,0 +1,11 @@
+However, we’ll take this opportunity to instead show you how to set up an “Execution Breakpoint” so that we can stop the code and visualize what’s going on when your code crashes.
+不过，我们借此机会向你展示如何设置“执行断点”，以便停止代码并可视化当代码崩溃时的情况。
+To this, click “Run -> View Breakpoints”. You should see a window like this pop up:
+点击“运行 -> 查看断点”。你应该会看到这样的窗口弹出来：
+Click on the checkbox on the left that says “any exception” and then click on that says “Condition:” and in the window and enter exactly:
+点击左边的“任意例外”复选框，然后点击“条件：”，在窗口里输入，准确地：
+
+this instanceof java.lang.ArrayIndexOutOfBoundsException
+
+NOTE: If you use the debug feature without specifying a condition, your code will stop in some various mysterious places. Make sure you never have “Any Exception” checked without having a specified condition. This is because the process of starting JUnit tests generates a bunch of exceptions that ultimately get ignored. This is well beyond the scope of our class. If you’re done using an execution breakpoint, you should uncheck the “Java Exceptions Breakpoints” box in the top left.
+注意：如果你使用调试功能而不指定条件，你的代码会在一些神秘的地方停止。确保没有指定条件的情况下，绝不要勾选“任何例外”。 这是因为启动 JUnit 测试的过程中会产生大量例外，最终这些异常都会被忽略。这远远超出了我们课程的范围。如果你已经不再使用执行断点，应该取消勾选左上角的“Java 异常断点”框。

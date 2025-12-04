@@ -1,0 +1,35 @@
+嵌套类时，如果任何内部类不需要任何外部的实例细节，则把内部类设为static，这样会节约内存
+Look Out (向外看 / 内部 -> 外部)：
+    是指 内部类 (Node) 的代码里，试图去访问 外部类 (LinkedListDeque) 的成员变量（比如 size 或 sentinel）。
+    这就是 Josh 说的禁忌。如果 Node 需要读写外面的 size，它就不能是 static。
+Look In (向内看 / 外部 -> 内部)：
+    是指 外部类 (LinkedListDeque) 的代码里，去访问 内部类 (Node) 的变量（比如 node.next, node.item）。
+    这是完全允许的！ 无论是否 static，外部类永远有权访问内部类的私有成员。
+泛化class时，在class名后加<xxx>来指定类型，然后后续的新变量都用xxx
+定义时xxx item = new xxx item
+使用时SLList<String> sl = new SLList<String>("bone");
+返回array时，需要一个语癖，xxx[ ] item=(xxx[ ]) new Object[~]
+场景 A：你是 AList 的制造者（Inside AList.java）
+你需要解决“Java 不允许创建泛型数组”这个问题，所以你被迫写那种奇怪的强转代码。
+Java
+// AList.java 文件内部
+public class AList<Item> {
+    private Item[] items; // 内部用来存数据的数组
+    public AList() {
+        // ❌ 错误写法：Java 不允许直接 new Item[100]
+        // items = new Item[100]; 
+        // ✅ 正确写法（你的记忆来源）：必须先 new Object，再强转
+        items = (Item[]) new Object[100]; 
+    }
+}
+场景 B：你是 AList 的使用者（Inside TimeAList.java）
+现在你在写 TimeAList.java，你只是在用别人写好的类。Java 的编译器会自动帮你处理好类型，你只需要告诉它你要存什么类型（Integer）就行了。
+Java
+// TimeAList.java 文件内部
+public void timeAListConstruction() {
+    // 这里我们不需要管内部数组是怎么 new 出来的
+    // 我们只需要创建一个 AList 对象
+    AList<Integer> Ns = new AList<>(); 
+}
+造 AList 时（写构造函数）：如果不强转，数组造不出来。
+用 AList 时（写 main 方法）：直接 new 就可以，编译器会帮你搞定剩下的事。

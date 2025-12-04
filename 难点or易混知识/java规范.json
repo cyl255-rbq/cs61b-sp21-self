@@ -1,0 +1,23 @@
+1. 大小写格式错误 (Casing Issues)
+Java 对不同类型的命名有严格的大小写规定。
+    普通变量、字段、方法名：必须使用 小驼峰命名法 (lowerCamelCase)。
+        不规范： First_Node (下划线是 Python 风格), FirstNode (首字母大写是类名风格), first_node。
+        规范： firstNode, size, resize, sentinel.
+        规则：首字母小写，后续每个单词的首字母大写。
+    类名 (Class Names)：必须使用 大驼峰命名法 (UpperCamelCase)。
+        不规范： arrayDeque, linked_list_deque.
+        规范： ArrayDeque, LinkedListDeque.
+    常量 (static final)：必须使用 全大写 + 下划线 (SCREAMING_SNAKE_CASE)。
+        不规范： minUsageRatio (如果它是 static final).
+        规范： MIN_USAGE_RATIO.
+2. 毫无意义的单字母 (Meaningless Single Letters)
+除非在特定的短循环中，否则不要使用单个字母作为变量名。CS61B 的 Checkstyle 会检测变量名的长度。
+    不规范：
+        double [] a; (数组叫 a，没人知道是干嘛的)
+        Node n; (是指 next 还是 new 还是 node？)
+        int x; (除非是坐标，否则不要用 x)
+    规范：
+        double[] items;
+        Node nextNode;
+        int size;
+    例外： 在 for 循环中，i, j, k 是允许用来表示索引（index）的。

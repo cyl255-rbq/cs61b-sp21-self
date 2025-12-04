@@ -1,0 +1,45 @@
+1. Interfaces provide us with the ability to make callbacks:
+    接口赋予了我们进行“回调（Callbacks）”的能力。
+    解释：
+        什么是 Callback？意思就是：主程序（比如 Arrays.sort）先跑着，跑到一半遇到不确定的事情时，它会回头调用（Call back）你写的一段代码。
+        在 Java 里，因为不能直接把函数传给主程序，我们只能用 Interface 作为载体来实现这个机制。
+2. Sometimes a function needs the help of another function that might not have been written yet.
+    有时候，一个函数需要另一个函数的帮助，但那个“帮手函数”可能还没被写出来。
+    解释：
+        想想写 Arrays.sort 的那个官方程序员（几十年前写的）。他写排序逻辑的时候，你还没出生呢，更别提你写的 Dog 类了。
+        虽然他不知道未来你要排什么，但他知道排序需要比较。
+        所以他留了一个空位（缺一个帮手），等你将来写代码的时候，把这个“比较函数”填进去。
+3. Example: max needs compareTo
+    例子：max 函数需要 compareTo 函数。
+    解释：
+        max 函数的逻辑是：“我要遍历数组，找出最大的。”
+        但是“谁大谁小”怎么算？max 自己不知道。它必须依赖 compareTo 来告诉它结果。
+4. The helping function is sometimes called a "callback".
+    这个起辅助作用的函数（比如 compareTo），有时被称为“回调函数”。
+    解释：
+        为什么叫“回”调？
+        因为控制权在 max 手里。max 在干活的过程中，转过头来调用你写的逻辑，问完之后，控制权又回到 max 手里继续干活。
+5. Some languages handle this using explicit function passing.
+    有些语言（比如 Python, C++, JS）通过显式的“函数传递”来处理这个问题。
+    解释：
+        这就是我们之前说的：在 Python 里你可以直接写 sort(key=my_function)。你把函数像皮球一样传进去了。
+6. In Java, we do this by wrapping up the needed function in an interface (e.g. Arrays.sort needs compare which lives inside the comparator interface)
+    在 Java 中，我们的做法是把这个需要的函数“包裹”在一个接口里（例如：Arrays.sort 需要 compare 函数，而这个函数住在 Comparator 接口里）。
+    解释：
+        这是 Java 的特色（或者说老版本的妥协）。
+        Java 没法直接传“函数”，所以必须把函数包装成一个对象（Comparator 对象）。
+        这就好比：我不允许你只送一张“披萨”进宫，你必须把披萨装在一个“锦盒”里，送锦盒进宫。
+7. Arrays.sort "calls back" whenever it needs a comparison.
+    每当 Arrays.sort 需要进行比较时，它就会“回调”那个函数。
+    解释：
+        Arrays.sort 是老大，它负责指挥排序算法（快排、归并等）。
+        每当它拿到两个元素 A 和 B，它不知道该怎么排，它就会按一下手里的“按钮”（调用 comparator.compare(A, B)）。
+        这个“按按钮”的动作，就是 Callback。
+8. Similar to giving your number to someone if they need information.
+    这就好比：你把电话号码留给某人，告诉他“如果需要信息就打给我”。
+    解释：
+        你 = 写具体比较逻辑的人。
+        某人 = Arrays.sort。
+        电话号码 = 接口对象（Comparator）。
+        Arrays.sort 在干活时遇到不懂的，就拨打你留下的电话（Callback），问你：“哎，这俩狗谁大？”，你回答后，它挂电话继续干活。
+这一页 PPT 其实就是在讲 “Callback 模式在 Java 里的落地实现”。 核心逻辑是： Java 不能传函数 → 必须把函数包在对象里 → 这个对象必须实现某个接口 → 主程序通过接口调用那个函数。

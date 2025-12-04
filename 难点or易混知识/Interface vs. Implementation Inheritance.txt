@@ -1,0 +1,204 @@
+1. Interface Inheritance (a.k.a. what)
+    Allows you to generalize code in a powerful, simple way. 接口继承（又叫“做什么”）：允许你以一种强大且简单的方式通用化代码。
+    解释：
+        这是指 implements Interface。
+        “a.k.a. what”：因为接口只规定了 “你能做什么”（比如能 add, 能 get），但不规定你怎么做。
+        “Generalize”：这就像我们之前说的，写一个 print(List L) 方法。只要大家不管是用什么姿势（数组还是链表）实现了 List 接口，都能用这个方法。这就叫“通用化”。
+2. Implementation Inheritance (a.k.a. how)
+    Allows code-reuse: Subclasses can rely on superclasses or interfaces. 实现继承（又叫“怎么做”）：允许代码复用：子类可以依赖父类或接口中的代码。
+    解释：
+        这是指 extends Class 或者接口里的 default 方法。
+        “a.k.a. how”：因为父类不仅告诉你有什么方法，还把具体的代码逻辑（怎么做） 写好送给你了。
+        “Code-reuse”：爸爸写好的 print() 方法，儿子直接拿来用，一行代码都不用自己写。这就是“复用”。
+3. Example: print() implemented in List61B.java
+    0Example: print() implemented in List61B.java. 例子：在 List61B.java 中实现的 print() 方法。
+    解释：
+        这指的是 Java 8 引入的特性。你可以在接口（List61B）里写一个带 default 关键字的 print() 方法。
+        这样一来，AList 和 SLList 哪怕不写 print 方法，也能直接拥有这个功能。这就是“继承了实现”。
+4. Gives another dimension of control...
+    Gives another dimension of control to subclass designers: Can decide whether or not to override default implementations. 给子类设计者提供了另一个维度的控制权：可以决定是否要重写默认的实现。
+    解释：
+        虽然爸爸（或接口）送了你一套默认代码（比如一个通用的 print 方法），但你不是非用不可。
+        控制权：你可以选择“偷懒”直接用爸爸的，也可以选择“自己动手”重写（Override）一个更高效的版本。你有选择的权利。
+5. Important: "is-a" relationships
+    Important: In both cases, we specify "is-a" relationships, not "has-a". 重要提示：在这两种情况下，我们指定的都是“是……”（is-a）的关系，而不是“有……”（has-a）的关系。
+    解释：
+        这是判断该不该用继承的黄金法则。
+        继承（extends/implements）代表身份的归属。
+        千万不要因为“我想复用那段代码”就乱继承。
+6. Good & Bad Examples
+    Good: Dog implements Animal, SLList implements List61B. Bad: Cat implements Claw, Set implements SLList.
+    好的例子：
+        狗 是 动物。逻辑通顺。
+        单链表 是 列表。逻辑通顺。
+    坏的例子（典型错误）：
+        Cat implements Claw（猫实现爪子）：
+            错！猫 不是 爪子，猫 拥有（has-a） 爪子。
+            你应该在 Cat 类里写 Claw myClaw;（组合），而不是 extends Claw。
+        Set implements SLList（集合实现单链表）：
+            错！Set（集合）要求元素不重复、无序，而 SLList 是有序的、可重复的。
+            虽然你想复用 SLList 的代码，但 Set 不是 一个 SLList。这会破坏逻辑模型。
+
+The Dangers of Implementation Inheritance
+
+1. 难以追踪代码来源
+    Makes it harder to keep track of where something was actually implemented (though a good IDE makes this better). 让你很难搞清楚某段代码到底是在哪里写的（虽然好的 IDE 如 IntelliJ 能缓解这个问题）。
+    解释：
+        当你看到 dog.bark() 时，如果继承层级很深（柯基 extends 狗 extends 动物 extends 生物...），你很难一眼看出来 bark() 这个方法到底是在那一层定义的。是在“狗”这一层？还是“动物”那一层？
+        “Spaghetti Code（面条代码）”：代码像面条一样缠在一起，理不清头绪。
+        IDE 的作用：好在现在的工具（比如 IntelliJ IDEA）很聪明，你按住 Ctrl/Command 点击方法名，它能直接带你去定义它的地方。
+2. 冲突规则极其晦涩
+    Rules for resolving conflicts can be arcane. Won't cover in 61B. 解决冲突的规则可能非常晦涩难懂（Arcane = 神秘、只有少数人懂）。61B 不会深究这个。
+    解释：
+        如果你继承了两个接口，这两个接口里都有一个叫 print() 的 default 方法。
+        当你调用 print() 时，Java 到底该听谁的？
+        为了解决这种 “多重继承冲突”（通常被称为 菱形问题 / Diamond Problem），Java 有一套非常复杂的判定规则。
+        潜台词：这玩意儿太偏太难了，咱们这课不考，你只要知道“会出事”就行。
+3. 诱导新手写出烂代码
+    Encourages overly complex code (especially with novices). Common mistake: Has-a vs. Is-a! 鼓励（诱导）写出过于复杂的代码（尤其是新手）。常见的错误：搞混“有（Has-a）”和“是（Is-a）”！
+    解释：
+        这是最经典的滥用。新手为了省事，为了复用某段代码，就强行继承。
+        错误示范：
+            你想复用“引擎”的代码。
+            你写了 public class Car extends Engine。
+            逻辑崩塌：车 不是 引擎，车只是 有 一个引擎。
+        后果：你的代码逻辑结构会变得非常诡异，难以维护。
+4. 破坏封装性
+    Breaks encapsulation! What is encapsulation? See next week. 破坏了封装性！什么是封装？下周见。
+    解释：
+        这是继承最大的原罪，也被称为 “脆弱的基类问题 (Fragile Base Class Problem)”。
+        简单预告：
+            封装的意思是：我（类）内部怎么工作是你管不着的，你只要用我的接口就行。
+            继承破坏了它：子类往往需要知道父类内部的实现细节才能正确工作。
+            后果：如果父类修改了一行内部代码（没改方法名，只改了逻辑），子类可能会莫名其妙地崩掉。子类和父类绑得太紧了。
+破坏封装性的例子
+
+这是一个非常经典的软件工程问题，通常被称为 “脆弱的基类问题” (The Fragile Base Class Problem)。
+最典型的例子就是 “计数器 HashSet” 的案例。这个例子能完美展示：如果你不知道父类内部是怎么写的，你的子类是多么容易“翻车”。
+场景设定
+假设你想写一个 “计数 Set”。 它的功能很简单：继承 Java 自带的 HashSet，然后记录一下我到底往里面加了多少次元素（addCount）。
+我们来看两个版本，看看父类的内部修改是怎么搞死子类的。
+第一阶段：父慈子孝（一切正常）
+假设 JDK 的 父类 (HashSet) 内部是这样实现的（简化版）：
+Java
+// 父类：HashSet
+public class HashSet<E> {
+    public boolean add(E e) {
+        // ... 添加单个元素的底层逻辑 ...
+        return true;
+    }
+    // 注意这里！父类的 addAll 是通过循环调用 add 来实现的
+    public boolean addAll(Collection<? extends E> c) {
+        boolean modified = false;
+        for (E e : c) {
+            if (add(e)) { // <--- 关键点：父类在这里调用了 add()
+                modified = true;
+            }
+        }
+        return modified;
+    }
+}
+现在你写了 子类 (CountingSet)：
+Java
+// 子类：CountingSet
+public class CountingSet<E> extends HashSet<E> {
+    private int addCount = 0; // 记录添加次数
+    @Override
+    public boolean add(E e) {
+        addCount++; // 记数 +1
+        return super.add(e);
+    }
+    // 我也重写了 addAll，因为我要统计批量添加的总数
+    @Override
+    public boolean addAll(Collection<? extends E> c) {
+        addCount += c.size(); // 记数 + N
+        return super.addAll(c); // 调用父类的 addAll 干活
+    }
+}
+此时出现了巨大的 Bug（逻辑崩溃）：
+当你执行 set.addAll(List.of(1, 2, 3)) 时，addCount 应该是 3，结果变成了 6！
+为什么？
+    你调用子类 addAll -> addCount 增加了 3。
+    子类调用 super.addAll。
+    父类 addAll 内部循环了 3 次，每次都调用 add。
+    由于多态，父类调用的这个 add 是子类重写的 add。
+    子类 add 又跑了一遍 -> addCount 又增加了 3。
+    结果：重复计数，逻辑崩了。
+第二阶段：父类“偷偷”改了代码（再次崩溃）
+你发现了上面这个问题，于是你想：“既然父类 addAll 会调用 add，那我子类就不重写 addAll 了，只重写 add 就够了。”
+于是你修改了 子类：
+Java
+// 子类修正版 V2
+public class CountingSet<E> extends HashSet<E> {
+    private int addCount = 0;
+    @Override
+    public boolean add(E e) {
+        addCount++; 
+        return super.add(e);
+    }
+    // 我把 addAll 的重写删掉了，依赖父类的 addAll 循环调用我的 add 来计数
+}
+现在正常了：set.addAll(...) -> 父类循环调 add -> 子类 add 被触发 -> 计数正确。
+但是！！！悲剧发生了。
+某天，Java 官方发布了 JDK vNext。开发 HashSet 的工程师觉得 addAll 循环调用 add 太慢了，于是他优化了父类内部代码：
+Java
+// 父类：HashSet (新版优化版)
+public class HashSet<E> {
+    public boolean add(E e) { ... }
+    public boolean addAll(Collection<? extends E> c) {
+        // 优化！直接操作底层数组，不再调用 add() 方法了！
+        // System.arraycopy(...)
+    }
+}
+注意：父类的方法名没变，签名没变，只是内部不再调用 add() 了。
+后果： 你的子类（修正版 V2）突然坏了！ 当你现在调用 set.addAll(...) 时：
+    它直接走了父类的优化版 addAll。
+    父类不再调用 add。
+    你的 addCount++ 一次都没有被执行。
+    结果：元素加进去了，但计数器是 0。逻辑再次崩了。
+总结：什么是“破坏封装”？
+在这个例子中：
+    封装 意味着：使用者不需要知道 HashSet 内部到底是怎么实现 addAll 的（是循环调 add 还是直接拷贝内存）。
+    继承破坏了它：你的子类逻辑 深度依赖 于父类“内部是不是调用了 add”这个实现细节。
+    父类一改内部逻辑（即便它是为了优化性能，完全合法的修改），子类的功能就彻底废了。
+    这就叫 “子类和父类绑得太紧了”。子类不仅继承了父类的接口，还不幸地依赖了父类的实现细节。
+正是因为你使用了“实现继承”（extends HashSet），才导致了这场灾难。
+
+这个 Bug 是怎么由“实现继承”引起的？
+请回看代码中的关键点：super.addAll(c)。
+    如果你只是“接口继承” (implements Set)： 你没法写 super.addAll()，因为接口里没有代码。你必须自己手写 addAll 的循环逻辑。虽然累，但你自己写的逻辑你自己完全掌控，父类变了跟你没关系。
+    因为你是“实现继承” (extends HashSet)： 你为了偷懒（代码复用），直接调用了爸爸的代码 super.addAll(c)。 这就意味着：你把子类的命运交到了爸爸的手里。
+3. 核心矛盾：打破了封装 (Breaking Encapsulation)
+    理想情况（封装）： 父类像一个黑盒子。你调用 addAll，只要它把东西加进去就行，你不应该关心它内部是循环调 add 还是直接拷贝内存。
+    实现继承的现实： 为了写对子类逻辑（那个计数器），你被迫窥探了父类的内部实现（你知道了父类 addAll 会调用 add）。 一旦你开始依赖这个内部实现细节，只要父类稍微改一下它的“实现代码”（Implementation），你的子类就崩了
+
+
+从计算机科学的分类来讲，Interface default methods 绝对属于 Implementation Inheritance（实现继承） 的范畴。
+虽然它们都是实现继承，但 Java 为了防止接口变得像类继承那样“危险”和“混乱”，给 default 方法加了一个巨大的限制：
+接口里没有“状态”（State / Instance Variables）。
+这是最关键的区别：
+    Class (extends)： 父类可以定义 int x;（变量）。父类的方法可以修改这个 x。子类继承的方法也依赖这个 x。
+        风险：非常高。父类改了 x 的用法，子类就崩了（像刚才那个 HashSet 计数器的例子）。
+    Interface (default)： 接口里不能定义实例变量（只能定义常量 static final）。 这意味着 default 方法无法操作内存里的数据，它只能调用接口里的其他方法。
+        风险：相对较低。因为它不涉及复杂的数据状态管理，通常只是纯逻辑的组合（比如 sort 只是循环调用 get 和 set）。
+default 会导致刚才那个“脆弱基类”的 Bug 吗？
+会！绝对会！
+虽然没有变量，但逻辑依赖依然存在。
+举个例子：
+假设接口 Collection 有两个 default 方法：
+    add(x): 默认抛出异常。
+    addAll(list): 默认循环调用 add(x)。
+如果你写一个类实现了这个接口：
+Java
+public class MyList implements Collection {
+    // 你重写了 add
+    public void add(x) { 
+        System.out.println("加了一个: " + x); 
+    }
+    // 你没重写 addAll，直接继承了接口的 default addAll
+}
+现在，如果 Java 官方修改了接口里的 default addAll，把它改成“不再循环调用 add，而是抛出异常”。 你的 MyList 就会突然坏掉。
+总结
+    本质上：Interface default 就是 Implementation Inheritance。因为它让你复用了逻辑代码。
+    程度上：它是 Lite 版（轻量版）。因为它没有成员变量，所以避开了最复杂的状态同步问题。
+    风险上：它依然有“破坏封装”的风险（子类依赖接口的内部逻辑），但比类继承稍微安全一点点。

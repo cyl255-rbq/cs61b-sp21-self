@@ -1,0 +1,119 @@
+1. 继承的基础
+    Original: VengefulSLList extends SLList means a VengefulSLList is-an SLList. Inherits all members! Variables, methods, nested classes.
+    翻译： VengefulSLList extends SLList 意味着 VengefulSLList 是一个 SLList（是一个关系）。它继承了所有的成员！包括变量、方法和嵌套类。
+    潜台词：
+        Is-a 关系：就像“柯基”是“狗”。任何需要用“狗”的地方，都可以放一只“柯基”进去（向上转型）。
+        全盘接收：爸爸有的东西（size 变量, addLast 方法等），儿子天生就有，不用重新写。
+2. 构造函数不继承
+    Original: Not constructors.
+    翻译： 不包括构造函数。
+    潜台词：
+        爸爸的构造函数叫 SLList()，儿子的构造函数叫 VengefulSLList()。
+        名字都不一样，怎么继承？所以你不能指望写了 new VengefulSLList() 就能自动用爸爸的初始化逻辑，你得自己写儿子的初始化逻辑。
+3. 构造函数的链条
+    Original: Subclass constructor must invoke superclass constructor first.
+    翻译： 子类的构造函数必须首先调用父类的构造函数。
+    潜台词：
+        先盖地基，再盖楼。
+        在儿子（VengefulSLList）初始化自己那些独有的复仇小本本之前，必须先保证爸爸（SLList）把基础的 size、sentinel 节点都设好。
+        如果你不写 super()，Java 会偷偷帮你调一个无参的 super()。
+
+
+4. super 的用法
+    Original: Use super to invoke overridden superclass methods and constructors.
+    翻译： 使用 super 关键字来调用被重写（Override）的父类方法和构造函数。
+例如super.f();  super.x;
+    潜台词：
+        如果你重写了 removeLast()，但你只想要在爸爸的逻辑上加一点点东西（比如记个仇），你不用把爸爸的代码重抄一遍。
+        直接 super.removeLast() 就能复用爸爸的代码，然后再加上你自己的代码。
+public VengefulSLList(Item x){
+	super(x) ;	←calls SLList(Item x)
+	deletedItems = newSLList<Item>();
+}
+↑√↓×，假如你有两个构造函数，如果你不指定调用哪个超类的构造函数，他会调用默认不带参数的
+public VengefulSLList(Item x){
+	deletedItems = new SLList<Item>():
+}
+super.super.x；
+Java 不支持 super.super！ 这是 CS61B 考试中最爱出的语法陷阱。
+在 Java 里，你只能访问直接父类（super），不能越级访问爷爷类。
+如果你想访问爷爷的变量，只能指望爸爸没覆盖它，或者爸爸提供了方法暴露它。你不能直接写 super.super。
+结论：Class C 这一行代码直接就会标红，编译不通过。
+1. 编译器的“死板”规则
+当你写子类的构造函数时，如果你没有在第一行显式地写 super(...)，编译器会自作主张地帮你插一行代码：
+Java
+// 你的代码
+public Child() {
+    // 啥都没写
+}
+// 编译器看到的（实际生成的）代码
+public Child() {
+    super(); // ❌ 它只会傻傻地插无参的 super()
+}
+2. 父类的“傲娇”规则
+我们在之前的问答里提到过“救急不救穷”原则：
+    如果父类什么构造函数都没写，Java 会送它一个无参构造函数 Parent() {}。
+    但是，既然你的父类写了一个 Parent(int a, int b)，Java 就会把那个免费赠送的无参构造函数收回。
+3. 惨案发生
+    子类试图调用 super()（无参）。
+    父类说：“我没有无参构造函数啊！我只有一个带两个参数的！”
+    结果：Compilation Error (无法将此类应用到给定类型)。
+在这种情况下（父类只有带参构造函数），你必须手动、显式地在子类构造函数的第一行调用 super，并传入参数。
+你不能偷懒，必须这样写：
+Java
+public class Child extends Parent {
+    public Child() {
+        // ✅ 必须手动写，而且要给具体的参数
+        // 至于给什么参数，看你的业务逻辑（是给 0，还是把参数透传进来）
+        super(10, 20); 
+    }
+    // 或者这样
+    public Child(int a, int b) {
+        super(a, b); // ✅ 把接收到的参数传给爸爸
+    }
+}
+总结
+    默认行为：Java 永远默认调用 无参 的 super()。
+    如果父类没无参构造：你 必须手动写 super(参数)，否则编译不过。
+
+
+5. 核心难点：动态绑定的两条规则
+    Original: Invocation of overridden methods follows two simple rules:
+    翻译： 调用被重写（Override）的方法时，遵循两条简单规则：
+(下面这两条是 Java 面试和考试最爱考的“必杀技”)
+规则一：编译看静态
+    Original: Compiler plays it safe and only lets us do things allowed by static type.
+    翻译： 编译器非常谨慎，只允许我们做“静态类型”允许的事情。
+    潜台词：
+        这是我们在聊 VengefulSLList v = sl; 报错那个问题时说的。
+        静态类型 = 变量声明时的类型（标签）。
+        如果你的标签是 SLList（手机），哪怕你手里拿的是最新的 iPhone 15 Pro Max，你也不能按“卫星通话”这个按钮。因为普通 SLList 没有这个功能，编译器怕你按错了。
+规则二：运行看动态
+    Original: For overridden methods the actual method invoked is based on dynamic type of invoking expression, e.g. Dog.maxDog(d1, d2).bark();
+    翻译： 对于被重写的方法，实际运行哪个方法，取决于调用者的“动态类型”。例如 Dog.maxDog(d1, d2).bark()。
+    潜台词：
+        动态类型 = new 出来的那个真实对象。
+        如果父类有 bark()，子类重写了 bark()。
+        哪怕你的变量标签是 Animal a = new Dog();（静态是 Animal）。
+        当你喊 a.bark() 时，因为 Java 运行时会看本质，它发现这是一条狗，所以会执行狗叫，而不是通用的动物叫。
+6. 强制转换
+    Original: Can use casting to overrule compiler type checking.
+    翻译： 可以使用强制类型转换（Casting）来推翻编译器的类型检查。
+    潜台词：
+        这就是 (VengefulSLList) sl。
+        你可以告诉编译器：“闭嘴，我知道这真的是个 iPhone，让我用卫星通话功能。”
+        如果你撒谎了（它其实是个诺基亚），运行的时候就会崩（ClassCastException）。
+7. 最坑的一点：重载不看动态！
+    Original: Does not apply to overloaded methods!
+    翻译： （动态类型选择规则）不适用于重载（Overloaded）的方法！
+    潜台词（极其重要）：
+        重写 (Override)：父子都有 bark()，参数一样。-> 看动态类型（看是谁）。
+        重载 (Overload)：一个类里有 play(Dog d) 和 play(Animal a)，参数不一样。-> 看静态类型（看标签）。
+    举个栗子说明这一条：
+    Java
+Dog d = new Dog();
+Animal a = d; // 静态类型是 Animal，动态类型是 Dog
+// 假设有个工具类
+Utility.check(d); // 会调用 check(Dog d)，因为 d 的静态类型是 Dog
+Utility.check(a); // 会调用 check(Animal a)，即使 a 本质是狗！
+    这是因为重载的方法选择是在编译阶段就定死的，编译器只看标签。它看到 a 的标签是 Animal，就把它绑定到了 check(Animal) 上，运行时不会改了。

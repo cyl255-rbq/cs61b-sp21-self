@@ -1,0 +1,88 @@
+当“静态类型”和“动态类型”完全一致时（比如 Dog d = new Dog()），你确实不需要烧脑去想那些规则，因为结果是显而易见的。
+只有当它们不一致（也就是发生了 多态 / Polymorphism，即 Parent p = new Child()）时，那两套规则才会打架，才会产生“编译器看这，运行期看那”的分裂现象。
+静态类型 (Static Type / Compile-time Type)
+    定义：写在等号左边的，变量声明时的类型。
+    比喻：包装盒上的标签。
+    作用：编译器只看它。它决定了你能调用哪些方法，能不能通过编译。
+    例子：Animal a = ...; （静态类型永远是 Animal）。
+动态类型 (Dynamic Type / Run-time Type)
+    定义：写在 new 后面的，内存里实际创建的对象的类型。
+    比喻：盒子里的真实物体。
+    作用：JVM 运行时看它。它决定了方法被调用时，到底执行哪一段代码（Override）。
+    例子：... = new Dog(); （动态类型是 Dog）。	
+规则 1：能不能调用？看静态 (Compiler checks Static)
+    口诀：“编译器是近视眼，只看标签。”
+    解释：哪怕你盒子里装的是 Iphone（动态），只要盒子上贴的是“板砖”（静态），编译器就不准你按“打电话”的按钮。因为它觉得板砖没有打电话的功能。
+    代码：
+    Java
+    Animal a = new Dog(); 
+    a.bark(); // ❌ 报错！(假设 Animal 类里没有 bark 方法)
+    // 编译器说：Animal 没这功能，我不管你实际上是不是狗。
+规则 2：执行哪段代码？看动态 (Override follows Dynamic)
+    口诀：“运行起来要诚实，身体最重要。”
+    解释：如果编译器放行了（即父类也有这个方法），那么在程序跑起来的时候，Java 会看对象的本质。如果是狗，就一定执行狗叫，而不是通用的动物叫。这是 Override（重写） 的核心。
+    代码：
+    Java
+    Animal a = new Dog();
+    a.eat(); // ✅ 假设 Animal 有 eat()，Dog 重写了 eat()
+    // 结果：执行 Dog.eat()。
+规则 3：参数选哪个？看静态 (Overloading follows Static) —— 这是最大的坑！
+    口诀：“重载选拔赛，早在编译期就定死了。”
+    解释：如果一个方法有多个版本（重载），比如 play(Animal a) 和 play(Dog d)。Java 在编译的时候，就会根据传入参数的静态类型把要调用的方法锁死。
+    代码：
+    Java
+class Trainer {
+    void train(Animal a) { print("训练动物"); }
+    void train(Dog d)    { print("训练狗"); }
+}
+Animal a = new Dog(); // 静态是 Animal，动态是 Dog
+Trainer t = new Trainer();
+
+t.train(a); 
+// 👉 结果："训练动物"
+// 因为 a 的静态类型是 Animal，编译器直接绑定到了 train(Animal) 上。
+// 运行时就算发现它是狗，也来不及改了。
+
+场景			代码示例			谁说了算？		备注
+类型一致
+(Simple)		Dog d = new Dog()	一致	没冲突。	编译器看 Dog，运行期也是 Dog。不用脑子想。
+方法调用检查
+(Check Access)	a.method()		静态类型		只要父类没这个方法，就报错。
+方法执行逻辑
+(Override)		a.method()		动态类型		如果子类重写了，跑子类的代码。
+重载方法选择
+(Overload)		test(a)			静态类型		看参数的标签选方法，不看本质。
+强制类型转换
+(Casting)		(Dog) a			程序员		你骗编译器说它是狗。如果骗错了，运行时崩。
+
+父类不能自动变成子类，但子类可以自动变成父类。
+Parent (父类/父接口) = SLList (相当于 手机)
+1. 为什么 SLList sl = vsl; 可以？（向上转型）
+这行代码的逻辑是：
+    “把一个 iPhone (vsl) 当作普通的 手机 (sl) 来用。”
+这是绝对安全的。 因为 iPhone 本来就是手机。iPhone 拥有手机的所有功能（打电话、发短信）。所以编译器非常放心地让你把 iPhone 赋值给“手机”变量。
+这就是你说的“之前那样 List A = new SLList()”，这叫 Upcasting（向上转型），是隐式的，不需要额外操作。
+2. 为什么 VengefulSLList vsl2 = sl; 报错？（向下转型）
+这行代码的逻辑是：
+    “把一个普通的 手机 (sl) 当作 iPhone (vsl2) 来用。”
+这是不安全的！ 虽然在这个例子里，我们人类知道那个 sl 其实原本就是一个 iPhone（vsl）。 但是，编译器很笨（也很谨慎）。
+编译器只看静态类型（即变量声明的类型）。它此时此刻只知道：
+    sl 的标签是 SLList（手机）。
+    并不是所有的“手机”都是“iPhone”！（它可能是个诺基亚，也可能是个安卓）。
+    如果你把一个诺基亚强行赋值给 VengefulSLList，当你调用 vsl2.printLostItems()（iPhone 独有功能）时，诺基亚会爆炸。
+为了防止这种“诺基亚爆炸”的情况，编译器拒绝这种赋值，除非你发誓它是 iPhone。
+3. 怎么解决？（强制类型转换）
+如果你确定、一定、以及肯定这个 sl 真的是一个 VengefulSLList，你可以通过**强制类型转换（Casting）**来告诉编译器：
+    “别管了，我以程序员的人格担保，这台手机绝对是 iPhone，出了事我负责。”
+代码要这样写：
+Java
+// 加上圆括号 (VengefulSLList<Integer>) 进行强转
+VengefulSLList<Integer> vsl2 = (VengefulSLList<Integer>) sl; 
+总结
+    小变大（子类 -> 父类）：自动通过。
+        父类 x = new 子类(); ✅
+        逻辑：iPhone 是 手机。
+    大变小（父类 -> 子类）：编译报错（除非强转）。
+        子类 x = 父类变量; ❌
+        逻辑：手机 不一定 是 iPhone。
+你的困惑在于你觉得“sl 明明就是刚才那个 vsl 嘛！” 但在编译器的眼里：一旦你把 vsl 赋值给了 sl，它就丢掉了“我是 iPhone”的身份牌，只戴着“我是手机”的身份牌了。

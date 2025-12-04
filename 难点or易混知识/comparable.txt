@@ -1,0 +1,83 @@
+我们的目的:创建个通用的max
+“我自己写的类，我自己加个方法 compareTo 不就行了吗？干嘛非要去签那个 implements Comparable 的卖身契？”
+使用comparable的原因是，我们可以对ourcomparable用于其他类，然后override一下compare to 去比较
+但是他不能应用于现有的类，比如String,Int等等，这些现有的类我们没法implements他们，所以就没办法override
+也就没办法去对这些类
+
+
+public interface OurComparable{
+	int compareTo(objectobj);
+}
+public class Dog implements OurComparable {
+	public int compareTo(object obj) {
+		/**Warning, cast can cause runtime error!米
+		Dog uddaDog = (Dog) obj;
+		return this.size - uddaDog.size;
+	}...
+public class Maximizer {
+	public static OurComparable max(OurComparable[] a) {
+	...
+}
+Dog[] dogs = newDog[]{d1, d2,d3};
+Dog largest = (Dog)Maximizer.max(dogs);
+
+
+
+publicc class Dog implements Comparable<Dog>{
+	public int t compareTo(Dog uddaDog) {
+		return this.size - uddaDog.size;
+	}
+
+
+
+场景一：你只想自己和自己比（不需要接口）
+假设你写了个 Dog 类，你只想比较两只狗谁大。
+Java
+public class Dog {
+    public int size;
+    // 我自己写个方法，我不 implement 任何东西
+    public int compareTo(Dog other) {
+        return this.size - other.size;
+    }
+}
+// 你的 Main 函数
+Dog d1 = new Dog(10);
+Dog d2 = new Dog(20);
+if (d1.compareTo(d2) > 0) { ... } // ✅ 完全没问题！
+结论：如果你的代码里只有具体的 Dog，你确实不需要接口。
+场景二：你想写一个“万能最大值函数”（必须有接口）
+现在，你的老板让你写一个工具类，要求：“给我写一个 max 函数，能找出数组里最大的元素。”
+老板的要求是：这个函数必须既能算 Dog 数组，又能算 Cat 数组，还能算 Integer 数组。
+1. 如果没有接口（灾难现场）
+因为 Java 是静态类型的，方法的参数必须写死类型。
+    为了支持 Dog，你得写：
+    Java
+public static Dog max(Dog[] items) { ... }
+为了支持 Cat，你得复制粘贴一遍：
+Java
+    public static Cat max(Cat[] items) { ... }
+    如果有 100 种动物，你就得写 100 个 max 函数。这太蠢了！
+2. 如果你想用 Object 偷懒（编译报错）
+你可能会想：“那我用 Object[] 接收参数不就行了？”
+Java
+public static Object max(Object[] items) {
+    int maxIndex = 0;
+    for (int i = 1; i < items.length; i++) {
+        // ❌ 报错！！！
+        // 编译器说：Object 类里根本没有 compareTo 这个方法！
+        if (items[i].compareTo(items[maxIndex]) > 0) { 
+            maxIndex = i;
+        }
+    }
+    return items[maxIndex];
+}
+编译器拦住你了：虽然你的 Dog 里写了 compareTo，但你传进来的时候是以 Object 的身份传进来的，Object 只有 toString 这种基础方法，没有比较方法。
+就像上面的，Object是系统自带的，你不能给他implements你自己的ourcommparable，所以你用系统的
+痛点一：你无法改变现有的类（String, Integer...）
+假设你写了一个超级好用的 max(OurComparable[] items) 函数。
+    你的类：你自己写的 Dog，你可以让它 implements OurComparable。没问题，你的函数能给狗排序。
+    现有的类：现在你想用这个函数给 字符串 (String) 排序。
+        String 类是 Java 官方写的，它被封死在 JDK 里了。
+        它的源码里写的是 implements Comparable（官方接口）。
+        它绝对不可能去 implements 你昨天刚在作业里发明的 OurComparable。
+后果： 你的 max 函数没法处理 String，也没法处理 Integer，也没法处理 Double。你的函数只能处理你自己写的类。这大大降低了它的通用性。

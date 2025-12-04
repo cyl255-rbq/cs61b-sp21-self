@@ -1,0 +1,23 @@
+目的是，当你写函数时，比如max，你需要比较，你需要不同的比较方法，而不是默认的，好多系统类都会有默认的比较顺序
+当然你自己创建的类除外，因为那个是你自己写的比较什么，如何比较，所以我们写comparator，传递一个这个对象（有点类似于传递一个string，然后根据string的内容来决定那种比较方法）
+但是这里我们用comparator，然后相当于创建个类implements  comparator，然后你自己命名个实例，只要这个实例会比较就行了
+然后这里我们需要封装一下，因为我们不会需要创建一个xxxcomparator实例，然后创建个方法返回实例
+public class Dog implements Comparable<Dog> {
+	private String name;
+	private int size;
+
+	public static classs NameComparator implements Comparator<Dog>{
+		public int compare(Dog d1, Dog d2) {
+			return d1.name.compareTo(d2.name);
+		}//这里应该用private的，然后创建个辅助函数用来创建NameComparator的实例
+	}
+	...
+}
+Comparator<Dog> cd =  new Dog.NameComparator();
+if（cd.compare(d1,d3) > 0) {
+	d1.bark();
+}else{		Result: If d1 has a name that comes
+d3.bark();		later in the alphabet than d3, d1 barks.
+}
+comparable是自己与别人比较，因为是在比如class Dog里创建的compare to函数
+comparator是比较其他对象，因为他是创建的一个中间类从而产生中间实例，从而调用这个中间实例的方法

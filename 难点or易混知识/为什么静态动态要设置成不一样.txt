@@ -1,0 +1,31 @@
+1.通用性，方便以后换实现（为了未来）。
+2.防止你乱用特有方法（为了规范）
+3.如果我们导入类，就可以使用“简单名称”（ArrayList），而不是更长的“规范名称”（java.util.ArrayList）。
+4.List<Integer> L2 = Utils.readIntsFromFile("somedata.csv");
+①为了“以后好改口” (Decoupling / 解耦)
+    左边 (List)：这是合同（Interface）。它规定了变量 L 拥有 add, get, remove 等标准功能。
+    右边 (ArrayList)：这是干活的人（Implementation）。它用数组的方式实现了这些功能。
+为什么要这么写？ 假设你今天觉得数组很好用，于是你用了 ArrayList。 但在三个月后，你发现这个程序需要频繁在头部插入数据，ArrayList 太慢了，你想换成 LinkedList。
+    如果你写的是死板的：
+    Java
+ArrayList<Integer> L = new ArrayList<>();
+// 后面代码里到处都把 L 当 ArrayList 用...
+那你不仅要改这一行，还得去改所有把 L 当作参数传递的方法签名（如果那些方法也写死了 ArrayList）。
+如果你写的是灵活的：
+Java
+List<Integer> L = new ArrayList<>();
+你只需要改右边那几个字：
+Java
+List<Integer> L = new LinkedList<>(); // ✅ 改完了！
+后面的几千行代码完全不用动。因为后面的代码只知道 L 是个 List，它不关心（也不需要知道）底层到底是数组还是链表。
+②结合我们刚才讨论的 静态类型 vs 动态类型：
+Java
+List<Integer> L = new ArrayList<>();
+    静态类型 (List)：决定了你能按什么按钮。
+        编译器只允许你调用 List 接口里定义的方法（比如 add, get）。
+        如果 ArrayList 里有个独门绝技叫 trimToSize()（这是 ArrayList 特有的，List 接口里没有），编译器不准你调用。
+        这其实是一种保护：它强迫你只使用通用的标准方法，防止你过度依赖某个具体实现的特性。
+    动态类型 (ArrayList)：决定了按钮按下去后的运行效率和逻辑。
+③因为我们相信这个最大的类可以处理好所有的东西
+④在这种情况下，你可能并不真正关心它是什么类型的列表。因此，这个方法可能只是返回一个列表，比如，那就是它的返回类型。
+所以在那种情况下，份你需要在左边有一个合适的内存框。
