@@ -24,13 +24,6 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
         size = 0;
     }
 
-    public LinkedListDeque(T x) {
-        sentinel = new IntNode<>(null, null, null);
-        sentinel.next = new IntNode<>(x, sentinel, sentinel);
-        sentinel.prev = sentinel.next;
-        size = 1;
-    }
-
     @Override
     public void addFirst(T item) {
         IntNode<T> temp = sentinel.next;
@@ -121,26 +114,22 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
 
     @Override
     public boolean equals(Object o) {
-        if(o == null)return false;
-        if (!(o instanceof LinkedListDeque<?>)) {return false;}
-        LinkedListDeque<T> other = (LinkedListDeque<T>) o;
+        if(o == null) {return false;}
+        if (!(o instanceof Deque<?>)) {return false;}
+        Deque<T> other = (Deque<T>) o;
         if(other.size() != this.size()) {return false;}
-        IntNode<T> otherSentinel = other.sentinel;
-        IntNode<T> mySentinel = sentinel;
-        if(otherSentinel.next == mySentinel.next) {return true;}
+        if(other == this) {return true;}
         for(int i=0;i<size;i++){
-            if (otherSentinel.next.item != mySentinel.next.item) {return false;}
-            otherSentinel = otherSentinel.next;
-            mySentinel = mySentinel.next;
+            if(other.get(i) != this.get(i)) {return false;}
         }
         return true;
     }
 
     public T getRecursive(int index) {
-        return helpGetRecursive(index, sentinel);
+        return helpGetRecursive(index, sentinel.next);
     }
 
-    public T helpGetRecursive(int index, IntNode<T> temp) {
+    private T helpGetRecursive(int index, IntNode<T> temp) {
         if(temp == sentinel) {return null;}
         if(index == 0) {return temp.item;}
         return helpGetRecursive(index-1, temp.next);

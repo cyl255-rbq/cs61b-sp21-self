@@ -5,6 +5,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import edu.princeton.cs.algs4.Stopwatch;
 
+import java.util.Iterator;
+
 
 /** Performs some basic linked list tests. */
 public class ArrayDequeTest {
@@ -254,5 +256,18 @@ public class ArrayDequeTest {
             N *= 2;
         }
         printTimingTable(Ns, times, opCounts);
+    }
+
+    @Test
+    public void iterator(){
+        int N=100;
+        ArrayDeque<Integer> test = new ArrayDeque<>();
+        for (int i=0;i<N;i++){
+            test.addLast(i);
+        }
+
+        for (int i:test){
+            System.out.println(i);
+        }
     }
 }

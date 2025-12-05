@@ -177,4 +177,27 @@ public class LinkedListDequeTest {
         }
         printTimingTable(Ns, times, opCounts);
     }
+
+    @Test
+    public void recursiveTest() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
+        int N=100;
+        for (int i=0;i<N;i++){
+            lld1.addLast(i);
+        }
+        Integer result = lld1.getRecursive(20);
+        assertEquals((int)lld1.getRecursive(20),20);
+    }
+
+    @Test
+    public void equal() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
+        ArrayDeque<Integer> lld2 = new ArrayDeque<>();
+        int N=100;
+        for (int i=0;i<N;i++){
+            lld1.addLast(i);
+            lld2.addLast(i);
+        }
+        assertTrue(lld1.equals(lld2));
+    }
 }
