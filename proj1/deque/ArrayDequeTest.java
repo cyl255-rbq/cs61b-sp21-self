@@ -274,4 +274,30 @@ public class ArrayDequeTest {
             System.out.println(i);
         }
     }
+
+    @Test
+    public void testEmptyToNonZeroCycle() {
+        ArrayDeque<Integer> ad = new ArrayDeque<>();
+
+        // 1. 先撑大数组
+        for (int i = 0; i < 100; i++) {
+            ad.addLast(i);
+        }
+        // 此时 length 应该是 128 或更大
+
+        // 2. 全部删光 (触发多次缩容)
+        for (int i = 0; i < 100; i++) {
+            ad.removeFirst();
+        }
+        // 此时 size = 0。
+        // 检查点：items.length 是多少？不应该小于 8。
+        // 检查点：nextFirst 和 nextLast 的位置合理吗？
+
+        // 3. 再加一个 (起死回生)
+        ad.addLast(999);
+
+        // 4. 验证
+        assertEquals(1, ad.size());
+        assertEquals((Integer) 999, ad.get(0)); // 这里如果不报错，说明你通过了考验
+    }
 }
