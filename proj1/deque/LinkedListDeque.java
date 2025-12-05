@@ -2,13 +2,13 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private static class IntNode<T> {
-        public T item;
-        public IntNode<T> next;
-        public IntNode<T> prev;
-        public IntNode(T i, IntNode<T> n, IntNode<T> m) {
+        T item;
+        IntNode<T> next;//（虽然在这个特定场景下危害不大），请把权限降到最低）
+        IntNode<T> prev;
+        IntNode(T i, IntNode<T> n, IntNode<T> m) {
             item = i;
             next = n;
             prev = m;
@@ -40,7 +40,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
     }
 
     @Override
-    public int size(){
+    public int size() {
         return size;
     }
 
@@ -133,7 +133,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         if (other == this) {
             return true;
         }
-        for (int i = 0;i < size;i++) {
+        for (int i = 0; i < size; i++) {
             if (!other.get(i).equals(this.get(i))) {
                 return false;
             }
@@ -152,6 +152,6 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         if (index == 0) {
             return temp.item;
         }
-        return helpGetRecursive(index-1, temp.next);
+        return helpGetRecursive(index - 1, temp.next);
     }
 }
