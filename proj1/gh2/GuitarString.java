@@ -42,7 +42,7 @@ public class GuitarString {
         //       are different from each other. It means you should repeatedly call
         //       Math.random() - 0.5 to generate new random numbers for each array index.
         int length = buffer.size();
-        while (!buffer.isEmpty()){
+        while (!buffer.isEmpty()) {
             buffer.removeFirst();
         }
         for (int i=0;i<length;i++)
@@ -57,7 +57,7 @@ public class GuitarString {
         //       the average of the two multiplied by the DECAY factor.
         //       **Do not call StdAudio.play().**
         double front = buffer.removeFirst();
-        double newLast = (front + buffer.get(0)) /2 * 0.996;
+        double newLast = (front + buffer.get(0)) / 2 * 0.996;
         buffer.addLast(newLast);
     }
 
