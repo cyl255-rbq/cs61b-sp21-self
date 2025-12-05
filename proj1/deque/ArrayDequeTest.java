@@ -265,6 +265,10 @@ public class ArrayDequeTest {
         for (int i=0;i<N;i++){
             test.addLast(i);
         }
+        for (int i=0;i<20;i++){
+            test.removeFirst();
+            test.removeLast();
+        }
 
         for (int i:test){
             System.out.println(i);
