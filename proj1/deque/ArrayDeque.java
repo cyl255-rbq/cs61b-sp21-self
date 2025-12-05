@@ -78,8 +78,9 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
     @Override
     public void printDeque() {
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++) {
             System.out.print(items[i] + " ");
+        }
         System.out.println();
     }
 
@@ -128,8 +129,8 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
     }
 
     private class ArrayDequeIterator implements Iterator<T> {
-        private int wizPos;
-        public ArrayDequeIterator(){
+        int wizPos;
+        ArrayDequeIterator() {
             wizPos = 0;
         }
 
@@ -140,11 +141,11 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
         @Override
         public T next() {
-            int temp = nextFirst;
-            if (temp + 1 == items.length) {
-                temp = -1;
+            int first = wizPos + nextFirst + 1;
+            if (first >= items.length) {
+                first -= items.length;
             }
-            T returnItem = items[wizPos + temp + 1];
+            T returnItem = items[first];
             wizPos += 1;
             return returnItem;
         }

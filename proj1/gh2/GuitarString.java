@@ -2,7 +2,6 @@ package gh2;
 
 import deque.ArrayDeque;
 import deque.Deque;
-import deque.LinkedListDeque;
 
 //Note: This file will not compile until you complete the Deque implementations
 public class GuitarString {
@@ -17,10 +16,11 @@ public class GuitarString {
 
     /* Create a guitar string of the given frequency.  */
     public GuitarString(double frequency) {
-        int length = (int)Math.round(SR / frequency);
+        int length = (int) Math.round(SR / frequency);
         buffer = new ArrayDeque<>();
-        for (int i = 0;i < length;i++)
+        for (int i = 0; i < length; i++) {
             buffer.addLast(0.0);
+        }
     }
 
 
@@ -34,8 +34,9 @@ public class GuitarString {
         while (!buffer.isEmpty()) {
             buffer.removeFirst();
         }
-        for (int i = 0;i < length;i++)
+        for (int i = 0; i < length; i++) {
             buffer.addLast(Math.random() - 0.5);
+        }
     }
 
     /* Advance the simulation one time step by performing one iteration of

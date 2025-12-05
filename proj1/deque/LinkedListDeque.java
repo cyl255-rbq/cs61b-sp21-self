@@ -6,7 +6,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private static class IntNode<T> {
         T item;
-        IntNode<T> next;//（虽然在这个特定场景下危害不大），请把权限降到最低）
+        IntNode<T> next; //（虽然在这个特定场景下危害不大），请把权限降到最低）
         IntNode<T> prev;
         IntNode(T i, IntNode<T> n, IntNode<T> m) {
             item = i;
@@ -92,9 +92,9 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
     }
 
     private class LinkedListDequeIterator implements Iterator<T> {
-        private int wizPos;
-        private IntNode<T> wizPosItem;
-        public LinkedListDequeIterator() {
+        int wizPos;
+        IntNode<T> wizPosItem;
+        LinkedListDequeIterator() {
             wizPos = 1;
             wizPosItem = sentinel.next;
         }
