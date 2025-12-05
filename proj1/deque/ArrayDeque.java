@@ -30,10 +30,10 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
             System.arraycopy(items, 0, temp, items.length - (nextFirst + 1), nextLast);
         } else {
             System.arraycopy(items, nextFirst + 1, temp, 0, nextLast - nextFirst - 1);
+        }
             items = temp;
             nextFirst = items.length - 1;
             nextLast = size;
-        }
     }
 
     private void addJudgment() {
