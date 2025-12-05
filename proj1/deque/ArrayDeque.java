@@ -1,5 +1,7 @@
 package deque;
 
+import org.junit.Test;
+
 import java.util.Iterator;
 
 public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
@@ -133,6 +135,7 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
         return new ArrayDequeIterator();
     }
 
+    @Override
     public boolean equals(Object o) {
         if(this == o) {return true;}
         if(o == null) {return false;}
