@@ -1,0 +1,1 @@
+注意，对于数组来说，用x.equals(items[i])而不是x==items[i]，因为"cat","fish",contains("cat")，这两个cat，相等判断的是字符串的内存地址，所以不行

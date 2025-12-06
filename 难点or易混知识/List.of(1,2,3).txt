@@ -1,0 +1,107 @@
+public static <Glerp> ArraySet<Glerp> of(Glerp... stuff) {
+	ArraySet<Glerp> returnSet = new ArraySet<GLerp>();
+	for (Glerp x : stuff) {
+		returnset.add(x);
+	}
+	return returnset;
+}
+
+第一部分：<Glerp> —— 它是“大喇叭声明”
+    位置：放在 public static 和返回类型 ArraySet<Glerp> 之间。
+你的疑问： 为什么这里要写一个 <Glerp>？
+解释： 这是一个 “局部变量声明”。 因为这个方法是 static（静态）的。
+    普通方法：可以使用类定义里的 <T>。比如 public void add(T x)。
+    静态方法：不能使用类定义里的 <T>！因为静态方法属于类，而不属于具体的对象。当静态方法运行时，对象还没 new 出来呢，所以它根本不知道类上面的 <T> 到底是 Integer 还是 String。
+所以，静态方法必须自己“自立门户”： 那个 <Glerp> 就是在对编译器喊话：
+    “喂！编译器听好了！在这个方法里，我会用到一个临时的泛型变量，名字叫 Glerp。别管它具体是啥，反正我在这个方法里就叫它 Glerp 了！”
+注：Glerp 只是个名字，换成 <T>, <E>, <K>, <Q> 都可以。CS61B 故意起个怪名字 Glerp 就是为了告诉你：这名字随你起。
+第二部分：ArraySet<Glerp> —— 它是“返回类型”
+    位置：在方法名 of 之前。
+解释： 这就很好理解了。这个方法执行完后，会吐出一个东西。 吐出什么呢？吐出一个 “装满 Glerp 类型对象的 ArraySet”。
+第三部分：(Glerp... stuff) —— 它是“可变参数”
+    位置：括号里的参数。
+解释： 这里的 ... (三个点) 是 Java 的 可变参数 (Varargs) 语法。 它的意思是：“你可以给我传 0 个、1 个、或者 100 个 Glerp 类型的参数，我都接着。”
+在方法内部，Java 会把 stuff 当作一个数组 Glerp[] stuff 来处理。
+
+1."You'll notice I'm not actually specifying a type here"
+（你会注意到，我并没有在这里明确指定类型）
+这是在说：当你在 main 函数里使用 of 方法时，你写得非常省事。
+    繁琐的写法（如果 Java 很笨）： 你需要显式地告诉编译器，那个 <Glerp> 到底是什么类型：
+    Java
+// 显式告诉编译器：Glerp 是 Integer
+// 注意那个尖括号 <Integer> 写在方法名 of 前面
+ArraySet<Integer> s = ArraySet.<Integer>of(1, 2, 3);
+实际的写法（Java 很聪明）： 你完全不需要写 <Integer>：
+Java
+    // 隐式写法
+    ArraySet<Integer> s = ArraySet.of(1, 2, 3);
+为什么不需要写？ 因为编译器开启了**“侦探模式”**：
+    编译器看了一眼括号里的参数 (1, 2, 3)。
+    它发现这些都是 int（自动装箱为 Integer）。
+    它推理出：“既然你传进来的 stuff 都是整数，那那个泛型占位符 Glerp 肯定就是 Integer 无疑了。”
+所以这句话的意思是：“看！你不需要手动写尖括号，编译器能自动猜出来。”
+
+2.当我们写 ArraySet.of(...) 时，我们是在直接呼叫 ArraySet 这个类（工厂），让它帮我们生产一个集合，而不是呼叫某一个具体的对象。
+"this is a static method being called"
+（这是一个被调用的静态方法）
+这句话是在强调调用者的身份。
+    普通方法（Instance Method）： 必须先 new 一个对象，然后由对象来调用。
+    Java
+ArraySet<Integer> s = new ArraySet<>(); // 先造对象
+s.add(1); // 由对象 s 来调用 add
+静态方法（Static Method）： 不需要对象，直接由 类名（Class Name） 来调用。
+Java
+    // ArraySet 是类名，of 是静态方法
+    // 就像 Math.max(1, 2) 一样
+    ArraySet.of(1, 2, 3);
+
+当你在 of(params...) 里传入了不同类型的数据（比如一个整数、一个字符串、一条狗），Java 编译器会进入 “寻找最大公约数”（或者叫 最近共同祖先 / Least Upper Bound）的模式。
+会有两种结果：要么被迫升级成 Object，要么直接报错。
+我们分情况来看：
+情况一：你把结果赋值给了一个“具体类型”的变量（报错）
+这是最常见的情况。假设你想创建一个存整数的集合：
+Java
+// 你的意图：创建一个整数集合
+// 你的行为：混入了字符串 "hi"
+ArraySet<Integer> s = ArraySet.of(1, 2, "hi"); 
+后果： 编译器直接标红报错。
+为什么？
+    编译器看参数：(1, 2, "hi")。
+        1 是 Integer。
+        "hi" 是 String。
+    编译器推理 Glerp 是什么：
+        它发现 Integer 和 String 没有血缘关系。
+        它们唯一的共同祖先是 Object（万物之祖）。
+        所以编译器决定：Glerp = Object。
+    编译器看返回值：
+        方法返回的是 ArraySet<Object>。
+    最后的赋值检查：
+        变量 s 要求是 ArraySet<Integer>。
+        但你给它的是 ArraySet<Object>。
+        泛型不协变（父亲的集合不是儿子的集合），所以类型不匹配，报错。
+情况二：你把结果赋值给了一个“宽泛类型”的变量（通过）
+如果你预判到了会有混合类型，并且把变量声明得很大：
+Java
+// 变量声明为 Object 类型
+ArraySet<Object> s = ArraySet.of(1, 2, "hi");
+后果： 编译通过，运行正常。
+为什么？
+    编译器推断 Glerp 为 Object。
+    返回类型是 ArraySet<Object>。
+    变量类型也是 ArraySet<Object>。
+    完美匹配！ 只是以后你从 s 里取出来的东西，编译器只认它们是 Object，不再认它们是整数或字符串了。
+情况三：有“近亲”关系（自动升级）
+如果你传入的是 Integer 和 Double：
+Java
+// 1 是整数，2.5 是小数
+ArraySet<Number> s = ArraySet.of(1, 2.5);
+后果： 编译通过。
+为什么？
+    编译器发现 Integer 和 Double 有一个共同的亲爹叫 Number。
+    于是它把 Glerp 推断为 Number。
+    返回 ArraySet<Number>，赋值给 ArraySet<Number>，匹配成功。
+总结
+当你传入不同类型时，编译器不会死机，它会尽力往上找祖宗：
+    推理阶段：它会找到这些参数的一个**“最近共同父类”**作为 Glerp 的类型（最坏的情况就是 Object）。
+    赋值阶段：如果推导出来的这个“父类”和你左边变量定义的类型不兼容，就会报错。
+所以，虽然不用写尖括号，但你传入的参数最好还是要即使类型不同，也要符合预期的继承关系，否则编译器救不了你。

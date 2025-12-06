@@ -1,0 +1,42 @@
+@Override
+public String toString(）{
+	String returnstring = "{";
+	for（int i = 0; i < size - 1; i += 1）{
+		returnstring += items[i].toString();
+		returnString += ", ";
+	}
+	returnstring += items[size - 1];
+	returnstring += "}" ;
+	return returnstring;
+} //这种方法是提前一个循环结束，然后处理最后一个循环(即不加空格)
+
+@Override
+public String toString() {
+	StringBuiIder returnSB = new StringBuilder("{"); //特殊对象，用来构建字符串
+	for (int i = 0; i < size; i += 1) {
+		returnSB.append(items[i]);
+		returnSB.append(", ");
+	}
+	returnSB.append("}");
+	return returnSB.toString(); //因为这里是对象，所以转换成字符串
+}
+这里下面的方法只是让这个toString变得更快了，因为+号是把整体重新复制一遍，然后相加，所以很慢
+
+@override
+public String toString(）{
+	List<String> listofItems = new ArrayList<>();
+	for (T x : this）{
+		listofItems.add(x.toString());
+	}
+	return String.join("，", listofItems）;
+}
+
+声明的是List<?> x这里List是interface即接口，而你这个ArrayList属于这个List，拥有List里的所有方法，所以可以add
+但是不可以new一个接口，所以你还得new这个
+
+在这个例子中
+我们选择 new ArrayList<>() 而不是 new LinkedList<>()，是因为：
+    我们要做的操作很单一： 只是不停地往后追加 (add)。ArrayList 做这个很擅长。
+    我们要省空间： ArrayList 更加轻量级。
+    我们要遍历速度： 最后 String.join 需要遍历这个 List，ArrayList 的连续内存让遍历速度更快。
+经验法则： 除非你明确知道你需要频繁地在 List 的“头部”或“中间”插入/删除数据，否则永远默认使用 ArrayList。
