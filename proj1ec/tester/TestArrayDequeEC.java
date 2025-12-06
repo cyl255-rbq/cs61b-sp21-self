@@ -16,7 +16,6 @@ public class TestArrayDequeEC {
         StudentArrayDeque<Integer> sad = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> good = new ArrayDequeSolution<>();
         for (int i = 0; i < 1000; i += 1) {
-            assertEquals(record, good.size(), sad.size());
             int randomNumber = StdRandom.uniform(0, 9);
             if (randomNumber == 1 || randomNumber == 5 || randomNumber == 6) {
                 sad.addLast(i);
@@ -41,6 +40,7 @@ public class TestArrayDequeEC {
                     assertEquals(record, good2, sad2);
                 }
             }
+            assertEquals(record, good.size(), sad.size());
         }
         sad.printDeque();
         good.printDeque();
