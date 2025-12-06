@@ -1,0 +1,4 @@
+Refactoring (重构) —— 重点解释
+首先回答你最关心的问题：Refactoring 绝对不是 Override (重写/覆盖)。
+    什么是 Override？ Override 是面向对象里的概念，指子类重新写了父类的方法。
+    什么是 Refactoring (重构)？ 重构的意思是：在不改变代码功能（输入输出不变）的前提下，把代码写得更漂亮、更整洁、更易读。
