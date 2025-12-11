@@ -1,0 +1,4 @@
+comparable，在主函数Implements，然后需要一个comparaTo的实例方法，自定义比较方式，如果是官方的则默认的
+comparator，在主函数内创建一个静态类(用来创建比较器，类似于迭代器)，然后需要一个compare的实例方法，接收两个参数，如果是自定义类
+则和comparable没什么区别，如果是官方类，可以泛化在后面implements Comparator<String>这样，从而更改默认比较方式
+java创建不同类，然后类里创建各种方法，然后通过创建不同的实例来调用各种方法

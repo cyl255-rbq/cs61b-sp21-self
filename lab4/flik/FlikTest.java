@@ -11,10 +11,13 @@ public class FlikTest {
     public void test() {
         int i = 128;
         int j = 128;
-        assertEquals(i, j);
-        boolean a = isSameNumber(i, j);
-        assertTrue(a);
+        Integer a = 128;
+        Integer b = 128;
+        System.out.println(a == b);
+        boolean c = isSameNumber(i, j);
+        assertTrue(c);
         System.out.println(isSameNumber(128, 128));
         System.out.println(isSameNumber(127, 127));
+        assertEquals(i, j);
     }
 }

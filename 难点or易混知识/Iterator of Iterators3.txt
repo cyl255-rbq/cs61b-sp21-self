@@ -1,0 +1,87 @@
+import java.util.*;
+
+这是整个算法最精妙的地方。它在一开始就把所有空的迭代器（废品）都过滤掉了。
+public class IteratorOfIterators implements Iterator<Integer> {
+    // 使用 LinkedList 作为"队列" (Queue)。
+    // 这里只存放"还有数据的迭代器"，空的会被直接扔掉。
+    LinkedList<Iterator<Integer>> iterators;
+
+    public IteratorOfIterators(List<Iterator<Integer>> a) {
+        // 1. 创建一个新的链表，与传入的 list 'a' 分离，互不影响结构
+        iterators = new LinkedList<>();
+        // 2. 遍历输入的每一个迭代器
+        for (Iterator<Integer> iterator : a) {
+            // 3. 【关键防御】安检！
+            // 只有当 iterator.hasNext() 为 true 时，才允许加入队列。
+            // 这样保证了 iterators 队列里存的每一个人，只要张嘴就能吐出数据。
+            if (iterator.hasNext()) {
+                iterators.add(iterator);
+            }
+        }
+    }
+
+    @Override
+    public boolean hasNext() {
+        // 只要队列不为空，就说明至少还有一个迭代器里有数据。
+        // 效率极高，O(1)。
+        return !iterators.isEmpty();
+    }
+
+    @Override
+    public Integer next() {
+        // 1. 标准防御：如果队列空了，说明没有任何数据了，抛异常
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        // 2. 【出队】：把排在队伍最前面的迭代器拿出来 (removeFirst)
+        // 此时，这个迭代器暂时离开了队列。
+        Iterator<Integer> iterator = iterators.removeFirst();
+        // 3. 【取值】：获取它的下一个数据
+        // 我们敢直接调 .next()，因为能进队列的肯定都是 hasNext() 为 true 的
+        int ans = iterator.next();
+        // 4. 【判断与归队】：
+        // 刚刚取完一个数，看看它肚子里还有没有剩下的？
+        if (iterator.hasNext()) {
+            // 如果还有，把它加回到队伍的末尾 (addLast)，等待下一轮被临幸
+            iterators.addLast(iterator);
+        }
+        // else { 
+        //    如果 iterator.hasNext() 变成 false 了，说明它被榨干了。
+        //    那就什么都不做，它就被丢弃了（垃圾回收），永远离开了队列。
+        // }
+        // 5. 返回刚才取到的值
+        return ans;
+    }
+}
+先把a的每一个迭代器判断一下是否至少有一项，有的话加入自己的list，如果自己的list不是empty则就还有next
+next令一个迭代器为list里移除的第一个，如果移除的还有next则加到末尾，然后返回移除的第一个的next
+
+假设输入：
+    A: [1, 2]
+    B: [] (空的)
+    C: [3]
+1. 初始化 (Constructor):
+    检查 A -> 有数据 -> 加入队列。
+    检查 B -> 没数据 -> 丢弃。
+    检查 C -> 有数据 -> 加入队列。
+    当前队列状态: [A, C]
+2. 第一次 next():
+    removeFirst(): 拿出 A。队列变成 [C]。
+    A 吐出 1。
+    检查 A 还有吗？有 (2) -> addLast(A)。
+    当前队列状态: [C, A] (A 排到了后面)。
+    返回 1。
+3. 第二次 next():
+    removeFirst(): 拿出 C。队列变成 [A]。
+    C 吐出 3。
+    检查 C 还有吗？没有了 -> 直接扔掉 C。
+    当前队列状态: [A]。
+    返回 3。
+4. 第三次 next():
+    removeFirst(): 拿出 A。队列变成 []。
+    A 吐出 2。
+    检查 A 还有吗？没有了 -> 直接扔掉 A。
+    当前队列状态: []。
+    返回 2。
+5. 第四次 hasNext():
+    队列是 [] (Empty) -> 返回 false。结束。

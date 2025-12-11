@@ -1,0 +1,68 @@
+import java.util.*;
+
+// 定义泛型类，实现 Iterable 接口，表示这个类可以被"foreach"循环遍历
+class FilteredList<T> implements Iterable<T> {
+    List<T> list;       // 原始数据列表
+    Predicate<T> pred;  // 过滤条件（过滤器）
+
+    // 1. 构造函数
+    public FilteredList(List<T> L, Predicate<T> filter) {
+        this.list = L;
+        this.pred = filter;
+    }
+    // 2. 生产迭代器的工厂方法
+    @Override
+    public Iterator<T> iterator() {
+        // 每次调用，都返回一个新的迭代器实例
+        return new FilteredListIterator();
+    }
+// 内部类开始
+    private class FilteredListIterator implements Iterator<T> {
+        int index; // 唯一的指针
+
+        // 3. 【核心引擎】moveIndex
+        // 作用：将 index 向后推，跳过所有不符合条件的元素，
+        // 直到撞上一个"好元素"或者"列表末尾"。
+        private void moveIndex() {
+            // hasNext() 在这里其实就是检查 index < list.size() (防越界)
+            // !pred.test(...) 表示：如果当前元素是"坏"的
+            while (hasNext() && !pred.test(list.get(index))) {
+                index += 1; // 继续往后找
+            }
+        }
+// 4. 迭代器构造函数
+        public FilteredListIterator() {
+            index = 0;    // 先把指针放在起点
+            moveIndex();  // 【关键一步】立刻启动引擎！
+        }
+// 5. 判断是否还有数据
+        @Override
+        public boolean hasNext() {
+            // 不需要做任何逻辑判断，只需要看指针有没有越界。
+            // 因为 moveIndex 保证了：只要没越界，指着的一定是好元素。
+            return index < list.size();
+        }
+// 6. 取出数据
+        @Override
+        public T next() {
+            // 标准防御
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            // A. 取值
+            // 因为我们确信 index 指向的是好元素，直接拿！
+            T answer = list.get(index);
+            // B. 推进
+            // 这一步分两动作：
+            index += 1;   // 1. 先盲目往后移一格（离开当前这个已经被取走的元素）
+            moveIndex();  // 2. 再次启动引擎，去找"下一个"好元素停下来
+            // C. 返回刚才拿到的值
+            return answer;
+        }
+    } // 内部类结束
+} // 类结束
+
+相比于我的，每次next后都把index指向下一个有next的位置
+如果你把你的 hasNext 里的那个 while 循环逻辑提取出来（起个名叫 moveIndex），然后在 构造函数 和 next() 的结尾 各调一次，你的代码瞬间就变成了官方代码。
+他的是遵循CQS 原则 (Command-Query Separation，命令-查询分离)。
+hasnext只是查看，而我的却含有移动

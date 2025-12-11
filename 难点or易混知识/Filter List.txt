@@ -1,0 +1,57 @@
+1 Filtered List
+We want to make a FilteredList class that selects only certain elements of a List
+during iteration. To do so, we’re going to use the Predicate interface defined below.
+Note that it has a method, test that takes in an argument and returns True if we
+want to keep this argument or False otherwise.
+
+public interface Predicate<T> {
+	boolean test(T x);
+}
+
+For example, if L is any kind of object that implements List<String> (that is, the
+standard java.util.List), then writing
+FilteredList<String> FL = new FilteredList<>(L, filter);
+gives an iterable containing all items, x, in L for which filter.test(x) is True.
+Here, filter is of type Predicate. Fill in the FilteredList class below.
+import java.util.*;
+
+// 1. 泛型声明 <T> 是对的
+public class FilteredList<T> implements Iterable<T> {
+    List<T> L;
+    Predicate<T> filter;
+    public FilteredList(List<T> L, Predicate<T> filter) {
+        this.L = L;
+        this.filter = filter;
+    }
+    @Override
+    public Iterator<T> iterator() {
+        return new PreIterator();
+    }
+    // 内部类，非静态，这样才能访问外面的 L 和 filter
+    private class PreIterator implements Iterator<T> {
+        int wizpos;
+        public PreIterator() { // 【修正1】名字要和类名 PreIterator 一致
+            wizpos = 0;
+        }
+        @Override
+        public boolean hasNext() {
+            // 【逻辑满分】侦察兵：只要没越界且不符合条件，就一直往后移
+            while (wizpos < L.size() && !filter.test(L.get(wizpos))) {
+                wizpos += 1;
+            }
+            // 停下来检查：是因为找到好人了？还是因为越界了？
+            return wizpos < L.size(); // 简洁写法，等同于你写的 if越界return false; else return true;
+        }
+        @Override
+        public T next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            // hasNext 保证了 wizpos 现在指着的是一个 好元素
+            T temp = L.get(wizpos);
+            // 拿完之后，指针一定要往后移一格，防止下次重复拿这个
+            wizpos += 1; 
+            return temp; 
+        }
+    }
+}

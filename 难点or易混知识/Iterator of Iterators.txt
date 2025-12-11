@@ -1,0 +1,43 @@
+public class IteratorOfIterators     {
+	List<Iterator<Integer>> list;
+	int wizpos;
+	int lastHasNext;
+
+	public IteratorOfIterators(List<Iterator<Integer>> a) {
+		this.wizpos = 0;
+		this.list = a;
+		this.lastHasNext = list.size() - 1;
+
+	@Override
+	public boolean hasNext() {
+			if (list.size() == 0) return false;
+			while (true) { 
+				if (list.get(wizpos).hasNext()) {
+					lastHasNext = wizpos;
+					return true;
+				}
+				if (wizpos == lastHasNext) {
+					return false;
+				}
+				wizpos = (wizpos + 1) % list.size();
+			}
+	}
+
+	@Override
+	public Integer next() {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
+		wizpos = (wizpos + 1) % list.size();
+		return list.get(lastHasNext).next();
+	}
+}
+
+
+while (true) { //这里不写wizpos < list.size(),因为
+编译器的脑回路如下：
+    “虽然用户拦截了 size == 0 的情况，但要是 wizpos 因为某种神奇的原因（比如别的代码改坏了它）变得特别大，比 list.size() 还大，怎么办？”
+    “比如：list.size() 是 5，但 wizpos 变成了 8。”
+    “这时候 while (8 < 5) 为 false，循环直接跳过不执行。”
+    “跳过循环后，代码就结束了，但是用户没有写最后的 return 语句！”
+    “不行，我不能通过编译，万一发生这种情况，我不知道该返回 true 还是 false。”

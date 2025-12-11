@@ -1,0 +1,58 @@
+import java.util.*;
+
+public class IteratorOfIterators implements Iterator<Integer> {
+    // 这里存储的是最终的整数数据！
+    // 就像是一个大仓库，把所有迭代器里的数字都抠出来放这儿了。
+    LinkedList<Integer> l;
+
+    public IteratorOfIterators(List<Iterator<Integer>> a) {
+        // 1. 初始化仓库
+        l = new LinkedList<>();
+        // 2. 【核心逻辑：疯狂囤货】
+        // 只要输入列表 a 里还有迭代器，循环就不停止。
+        // 注意：这个循环会一直运行，直到所有迭代器都被榨干并移除。
+        while (!a.isEmpty()) {
+            // 3. 取出第一个迭代器 (模拟 Round-Robin 的头部)
+            // 注意：这里直接修改了传入的列表 a，把它变短了
+            Iterator<Integer> curr = a.remove(0);
+            // 4. 检查它有没有数据
+            if (curr.hasNext()) {
+                // 5. 【立即消费】：
+                // 不等待用户调用 next()，现在就把它取出来！
+                // 取出来后放入我们自己的仓库 l 中。
+                l.add(curr.next());
+                // 6. 【归队】：
+                // 因为刚才 curr 还有数据（进了 if），我们要把它放回列表 a 的末尾
+                // 这样下次循环还能轮到它。
+                a.add(curr);
+            }
+            // else {
+            //    如果 curr.hasNext() 是 false，代码什么都不做。
+            //    curr 既没有被存入数据，也没有被放回列表 a。
+            //    它就这样被丢弃了。
+            // }
+        }
+        // 构造函数结束时，列表 a 已经空了，仓库 l 塞满了所有数据。
+    }
+
+    @Override
+    public boolean hasNext() {
+        // 检查仓库里还有没有库存
+        return !l.isEmpty();
+    }
+
+    @Override
+    public Integer next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        // 直接从仓库头部拿走一个数据
+        // 因为构造函数里加入的顺序就是轮询的顺序，所以这里直接拿是对的。
+        return l.removeFirst();
+    }
+}
+
+虽然代码逻辑简单（把复杂的轮询转化为了简单的列表操作），但你需要清楚它做了什么：
+    破坏性读取：在 new IteratorOfIterators(a) 执行完的那一刻，传入的 List a 变成了空的（因为 while 循环把它删光了）。
+    内存占用：如果 a 里面包含 100 万个数据，你的 l 列表就会瞬间占用 100 万个整数的内存。
+    初始化延迟：如果数据量大，new 这个对象的时候会卡很久。

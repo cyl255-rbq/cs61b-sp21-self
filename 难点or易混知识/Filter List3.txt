@@ -1,0 +1,62 @@
+import java.util.*;
+
+public class FilteredList<T> implements Iterable<T> {
+    List<T> list;       // 原始数据
+    Predicate<T> pred;  // 过滤规则
+
+    // 1. 构造函数：接收数据和规则
+    public FilteredList(List<T> L, Predicate<T> filter) {
+        this.list = L;
+        this.pred = filter;
+    }
+
+    // 2. 工厂方法：生产迭代器
+    @Override
+    public Iterator<T> iterator() {
+        return new FilteredListIterator();
+    }
+// 内部类
+    private class FilteredListIterator implements Iterator<T> {
+        // 【关键点】这是一个暂存结果的小金库
+        // 我们会把所有筛选出来的"好元素"都拷贝到这里面
+        LinkedList<T> items;
+public FilteredListIterator() {
+            // 1. 初始化小金库
+            items = new LinkedList<>();
+            // 2. 【一次性遍历】
+            // 此时此刻，不管用户以后会不会调用 next()，
+            // 我们先把整个原列表 list 扫描一遍。
+            for (T item: list) {       
+                // 3. 【筛选】
+                // 只有符合条件 (pred.test 为 true) 的元素...
+                if (pred.test(item)) {
+                    // 4. ...才会被加入到 items 列表中
+                    items.add(item);
+                }
+            }
+            // 构造函数结束时：
+            // - 原列表 list 的任务完成了，以后不再需要看它。
+            // - 新列表 items 里装满了所有符合条件的数据。
+        }
+
+        @Override
+        public boolean hasNext() {
+            // 只需要看小金库里还有没有存货
+            return !items.isEmpty();
+        }
+
+        @Override
+        public T next() {
+            // 标准防御
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            // 【消耗品模式】
+            // 直接把列表头的第一个元素拿出来并删除 (removeFirst)
+            // 因为 items 是我们自己复制出来的副本，所以删了也没事，不会影响原数据。
+            return items.removeFirst();
+        }
+    } // 内部类结束
+} // 类结束
+
+这种是直接在创建迭代器的时候，先手动筛选一遍合格的，然后产生了个items的list，再去按照正常迭代器的思维迭代，复杂度是2N

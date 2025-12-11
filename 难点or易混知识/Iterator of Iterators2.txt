@@ -1,0 +1,117 @@
+import java.util.*;
+public class IteratorOfIterators implements Iterator<Integer> {
+    List<Iterator<Integer>> list;
+    int wizpos; // 只保留这就够了，不需要 lastHasNext
+    public IteratorOfIterators(List<Iterator<Integer>> a) {
+        this.wizpos = 0;
+        this.list = a;
+    }
+
+    @Override
+    public boolean hasNext() {
+        if (list.isEmpty()) return false;
+        int size = list.size();
+        int count = 0; // 计数器：记录我们检查了多少个迭代器
+        // 核心逻辑：我就只检查 size 次
+        while (count < size) {
+            // 计算当前要检查的下标。
+            // 技巧：利用取模 (%) 实现从 wizpos 开始往后绕圈圈
+            int checkIndex = (wizpos + count) % size; //当前位置
+            if (list.get(checkIndex).hasNext()) {
+                // 哈哈！找到了！
+                // 把 wizpos 正式移动到这个有数据的位置，给 next() 用
+                wizpos = checkIndex;
+                return true;
+            }
+            // 没找到？计数器+1，准备看下一个
+            count++;
+        }
+        // 循环自然结束了，说明查了 size 次都没数据
+        return false;
+    }
+
+    @Override
+    public Integer next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        // hasNext() 已经把 wizpos 对准了有数据的那个位置
+        Integer result = list.get(wizpos).next();
+        // 【打完收工，准备下一次】
+        // 取完数据后，指针往后挪一位，保证公平轮询
+        // 下次 hasNext 就会从下一个人开始查
+        wizpos = (wizpos + 1) % list.size();
+        return result;
+    }
+}
+这个相当于每次检查的时候都把从检查的位置开始按圆把所有位置看一遍，所以count每次都重置为0
+wizpos+count表示从wizpos开始看到哪儿了，然后取模这样按圆，如果都看过一遍都没用，则无
+
+场景设置
+    桌子上有 3 个盘子（这就代表那 3 个 Iterator）：
+        盘子 A（位置 0）：里有 [1, 3, 4, 5] 四个寿司。
+        盘子 B（位置 1）：是 空 的。
+        盘子 C（位置 2）：里有 [2] 一个寿司。
+    你是那个吃寿司的人（代表 IteratorOfIterators）。
+    规则：
+        你面前有一个指针 wizpos，一开始指着 盘子 A。
+        轮询规则：你每次吃完一个，必须把身体挪到下一个盘子面前（哪怕下一个盘子是空的，你吃完也要挪过去，这叫公平）。
+        寻找规则（hasNext）：想吃东西时，你从当前位置开始看。如果当前盘子空了，你就伸长脖子看下一个。最多只能看 3 个盘子（因为总共就 3 个）。如果你看了 3 个盘子全是空的，那你就死心了（返回 false）。
+慢动作演示（带入你的数据）
+第 1 口：想吃东西
+    当前位置：你站在 A 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看看 A。A 有寿司吗？有（是 1）。
+        好，停下，确认能吃。
+    开吃（next）：
+        你吃掉了 1。
+        吃完必须挪位：你从 A 挪到了 B 面前。
+        （现在 wizpos 指向 B）。
+第 2 口：想吃东西
+    当前位置：你站在 B 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看看 B。B 有吗？没有（空的）。
+        第 2 眼（数 1）：看看 C。C 有吗？有（是 2）。
+        好，你把身体挪到 C 面前准备吃。
+    开吃（next）：
+        你吃掉了 2。
+        吃完必须挪位：你从 C 挪到了 A 面前（因为 C 后面就是 A，转圈圈）。
+        （现在 wizpos 指向 A）。
+第 3 口：想吃东西
+    当前位置：你站在 A 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看看 A。A 有吗？有（是 3）。
+        好，确认能吃。
+    开吃（next）：
+        你吃掉了 3。
+        吃完必须挪位：你从 A 挪到了 B 面前。
+        （现在 wizpos 指向 B）。
+第 4 口：想吃东西（最关键的一步！）
+    当前位置：你站在 B 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看看 B。空了。
+        第 2 眼（数 1）：看看 C。也空了（刚才被吃掉了）。
+        第 3 眼（数 2）：看看 A。有（是 4）。
+        好，你把身体挪到 A 面前准备吃。
+    开吃（next）：
+        你吃掉了 4。
+        吃完必须挪位：你从 A 挪到了 B 面前。
+        （现在 wizpos 指向 B）。
+第 5 口：想吃东西
+    当前位置：你站在 B 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看 B，空。
+        第 2 眼（数 1）：看 C，空。
+        第 3 眼（数 2）：看 A，有（是 5）。
+        好，挪到 A。
+    开吃（next）：
+        吃掉 5。
+        吃完必须挪位：挪到 B。
+第 6 口：想吃东西
+    当前位置：你站在 B 面前。
+    开始找（hasNext）：
+        第 1 眼（数 0）：看 B，空。
+        第 2 眼（数 1）：看 C，空。
+        第 3 眼（数 2）：看 A，也空了。
+        结论：我看完了所有 3 个盘子，全是空的。
+        大喊：没吃的了！(返回 false)。

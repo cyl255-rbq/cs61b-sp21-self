@@ -1,0 +1,24 @@
+public static boolean noUniques(int[] array) {
+	array = sort(array);
+	int N = array.length;
+	int curr = array[0];
+	boolean unique = true;
+	for (int i = 1; i < N; i += 1) {
+		// 如果当前数字和手里拿的一样
+		if (curr == array[i]) {
+    			unique = false; // 警报解除！说明 curr 找到了伴侣，不唯一了。
+		} 
+		// 如果不一样（说明换了一个新数字，进入了下一组）
+		else if (unique) {
+    		// 换组的时候警报还响着（unique 为 true）
+    		// 说明刚才那一组数字，直到结束都没找到重复项。
+   			 return false; // 发现唯一值，直接失败返回。
+		} 
+		// 换组了，且上一组是安全的
+		else {
+    			unique = true;  // 重置警报，为新数字拉响警报
+   			 curr = array[i]; // 拿起这个新数字
+		}
+	}
+	return !unique;
+}
