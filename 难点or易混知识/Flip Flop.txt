@@ -1,0 +1,37 @@
+假设我们有如下定义的 flip 函数。假设方法 unknown 返回一个介于 1 和 N 之间的随机整数（不包含 N），且运行时间为常数。
+对于以下每种 flip 方法的定义，请用 Θ(.) 表示法给出 flip 函数关于 N 的最佳和最坏情况运行时间。
+public static void flip(int N) {
+    if (N <= 100) {
+        return;
+    }
+    int stop = unknown(N);
+    for (int i = 1; i < N; i++) {
+        if (i == stop) {
+            flop(i, N);
+            return;
+        }
+    }
+}
+(a)
+public static void flop(int i, int N) {
+    flip(N - i);
+}
+(b)
+public static void flop(int i, int N) {
+    int minimum = Math.min(i, N - i);
+    flip(minimum);
+    flip(minimum);
+}
+(c)
+public static void flop(int i, int N) {
+    flip(i);
+    flip(N - i);
+}
+答案:
+(a):Best Case: Θ(N), Worst Case: Θ(N)
+(b):Best Case: Θ(1), Worst Case: Θ(N log(N))
+(c):Best Case: Θ(N), Worst Case: Θ(N^2)
+对于b，看到min(i, N - i)，想到N/2，先让stop=1，flip(1)×2，最小为1，再让stop=N-1,结果for了n次，然后两次return，再让stop=N/2,前面for了N/2次，然后2*flip(N/2)，此时我再取N/2/2，这时候for了2*(N/4)还是N/2，然后再flip(N/2/2)
+即每次都for N/2次，取决于N能坚持多久直到<=100结束，即为logN，所以为NlogN
+对于c，看到i和N-i，对称还是考虑N/2，先stop=1,flip(i)→return,flip(N)→flip(N-1),所以共N次，再考虑N，for了n-1次，然后flip(N-1),flip(1)→return，所以是N*N→N²，在考虑N/2，for了N/2次，然后2*flip(N/2),此时再取N/2/2，则还是for了N/2
+然后flip(N/2/2)，此时和上一个一样，为NlogN，所以最大为N²

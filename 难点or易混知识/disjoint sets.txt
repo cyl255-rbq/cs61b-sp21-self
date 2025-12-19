@@ -1,0 +1,16 @@
+Sets (普通集合)
+    用途： “去重” 和 “点名”。
+    核心逻辑： 就像一个VIP名单。
+        这个名字在不在名单上？(contains)
+        把这个名字加进名单（如果已存在就忽略）。(add)
+    典型操作： add, remove, contains, size.
+    例子： 只有 HashSet、TreeSet。
+Disjoint Sets (不相交集 / 并查集)
+    用途： “分组” 和 “连线”。
+    核心逻辑： 就像帮派管理系统。
+        一开始每个人都是光杆司令，自己是一个帮派。
+        Union (合并): 两个老大握手，两个帮派合并成一个大帮派。
+        Find (查找): 问小弟A：“你老大是谁？”（用来判断两个人是不是同一个帮派的）。
+    别名： 它的学名其实叫 Union-Find（并查集），这个名字更能反映它的真实用途。
+    典型操作： union(x, y), find(x), isConnected(x, y).
+Java 只给了 Set，没给 Disjoint Set，Disjoint Set (通常需要你自己写)

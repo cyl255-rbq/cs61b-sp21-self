@@ -1,0 +1,73 @@
+import java.util.Stack; // 记得导包
+
+private class BSTMapIter implements Iterator<K> {
+    // 唯一的实例变量：一个栈，用来代替递归时的“脑子”
+    private Stack<Node> stack;
+
+    public BSTMapIter() {
+        stack = new Stack<>();
+        // 构造器初始化：先把 root 和它左边那一串全部压入栈
+        // 这就相当于找到了整棵树最小的那个起点
+        moveLeft(root);
+    }
+
+    // --- 核心辅助方法：一路向左，存入栈中 ---
+    // 这个动作就像你把这一串葡萄提起来放进篓子里
+    private void moveLeft(Node p) {
+        while (p != null) {
+            stack.push(p);  // 压进去！
+            p = p.left;     // 继续往左走
+        }
+    }
+
+    @Override
+    public boolean hasNext() {
+        // 只要篓子（栈）里还有葡萄，就说明没吃完
+        return !stack.isEmpty();
+    }
+
+    @Override
+    public K next() {
+        if (!hasNext()) throw new java.util.NoSuchElementException();
+
+        // 1. 从栈顶拿出一个节点
+        // 因为我们是一路向左压的，所以拿出来的肯定是当前剩下里最小的
+        Node current = stack.pop();
+        
+        // 2. 这一步最关键！
+        // 既然 current 已经被访问了（也就是 next 返回它了），
+        // 按照中序遍历（左-中-右），下一个该轮到 current 的“右子树”了。
+        // 所以我们把 current.right 扔给 moveLeft。
+        // moveLeft 会把右子树里“最左边”的一串压入栈。
+        if (current.right != null) {
+            moveLeft(current.right);
+        }
+        return current.key;
+    }
+}
+4. 模拟一下过程（这就通透了）
+假设树是这样：
+    5
+   / \
+  3   8
+    new BSTMapIter():
+        调用 moveLeft(5)。
+        5 入栈，3 入栈。（3 往左是 null，停）。
+        Stack: [5, 3] （3 在最上面）。
+    第一次 next():
+        pop() 拿出 3。
+        3 没有右孩子，if 不执行。
+        返回 3。
+        Stack: [5]。
+    第二次 next():
+        pop() 拿出 5。
+        5 有右孩子 8！
+        执行 moveLeft(8)。
+        8 入栈。（8 往左是 null，停）。
+        Stack: [8]。
+        返回 5。
+    第三次 next():
+        pop() 拿出 8。
+        8 没右孩子。
+        返回 8。
+        Stack: []（空了）。

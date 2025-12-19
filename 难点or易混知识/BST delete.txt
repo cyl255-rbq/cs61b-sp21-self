@@ -1,0 +1,30 @@
+    //主要思想是什么呢，就是说递归，返回删除后的节点，你要接住所以这里是return node.left，就是层层递归回去
+    private Node delete(Node node, Key key) {
+        if (node == null) return null;
+
+        int cmp = key.compareTo(node.key);
+        if      (cmp < 0) node.left  = delete(node.left,  key);
+        else if (cmp > 0) node.right = delete(node.right, key);
+        else {
+            if (node.right == null) return node.left;//解决了链接0个/1个的情况，如果0个则null,1个则返回另一边的节点
+            if (node.left  == null) return node.right;
+            Node temp = node;
+            node = min(temp.right);
+            node.right = deleteMin(temp.right);
+            node.left = temp.left;
+        }
+        node.size = size(node.left) + size(node.right) + 1;
+        return node;
+    }
+    //返回删除最小节点后的节点
+    private Node deleteMin(Node node) {
+        if (node.left == null) return node.right;
+        node.left = deleteMin(node.left);
+        node.size = size(node.left) + size(node.right) + 1;
+        return node;
+    }
+    //找到右边最小的
+    private Node min(Node node) {
+        if (node.left == null) return node;
+        else                   return min(node.left);
+    }
