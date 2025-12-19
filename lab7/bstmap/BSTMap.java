@@ -2,7 +2,7 @@ package bstmap;
 
 import java.util.*;
 
-public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>, Iterable<K> {
+public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     private Node root;
     private int size;
 
