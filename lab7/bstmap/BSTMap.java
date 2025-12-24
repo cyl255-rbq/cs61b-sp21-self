@@ -171,7 +171,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         }
     }
 
-
+/**
     private class BSTMapIter implements Iterator<K> {
         private Stack<Node> stack;
 
@@ -202,6 +202,36 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
             return current.key;
         }
     }
+ */
+
+private class BSTMapIter implements Iterator<K> {
+
+    private List<K> keyList;
+    private int index;
+
+    public BSTMapIter() {
+        keyList = new ArrayList<>();
+        index = 0;
+        inOrderTraversal(root, keyList);
+    }
+
+    private void inOrderTraversal(Node node, List<K> list) {
+        if (node == null) return;
+        inOrderTraversal(node.left, list);
+        list.add(node.key);
+        inOrderTraversal(node.right, list);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return index < keyList.size();
+    }
+
+    @Override
+    public K next() {
+        return keyList.get(index++);
+    }
+}
 
     @Override
     public Iterator<K> iterator() {
