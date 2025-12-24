@@ -1,0 +1,40 @@
+1. Collection（接口）：这是“容器的类型”
+这就好比你买了一个**“收纳箱”**。
+    Collection 这个接口规定了这个东西必须具备的功能：能往里放东西（add），能往外拿东西（remove），能清点数量（size）。
+    但是，光说“这是一个收纳箱”，并没有规定这个箱子是用来装什么的。它是装衣服的？装乐高的？还是装垃圾的？
+    在你的代码中，使用 Collection 作为变量类型（而不具体指明是 ArrayList 还是 HashSet），是为了多态。这意味着你的桶可以是任何一种符合“收纳箱标准”的实现。
+2. <Node>（泛型）：这是“贴在箱子上的标签”
+这就好比你在收纳箱上贴了一张纸条，写着：“只许装 Node”。
+    如果你不写 <Node>（即只写 Collection），这在 Java 中被称为原生态类型 (Raw Type)。这就好比一个没有标签的箱子。
+    没有泛型的后果：
+        你也往里扔一个 Node（钥匙）。
+        你也往里扔一个 String（香蕉皮）。
+        Java 编译器不会阻止你，因为“箱子就是装东西的嘛”。
+        但是，当你伸手进去拿东西时，你以为拿出来的是 Node，结果摸到了香蕉皮，程序就会因为类型转换错误（ClassCastException）而崩溃。
+为什么必须合起来写？
+在你的实验代码 Collection<Node>[] buckets 中：
+    Collection (接口) 告诉编译器：
+        “我不管具体是用链表还是数组来实现这个桶，我只要求这个桶能支持 add、remove 这些标准操作。” -> 这解决了代码复用的问题（多态）。
+    <Node> (泛型) 告诉编译器：
+        “我不管你是什么桶，但你里面只能存放 Node 对象。如果有人试图往里放 Integer 或 String，请立刻报错。” -> 这解决了安全性的问题（类型安全）。
+代码对比
+如果不写 <Node> (虽然它是接口，但也是允许不写泛型的，只是不推荐)：
+Java
+// 这是一个“原生态”的 Collection，什么都能装
+Collection buckets = new ArrayList(); 
+buckets.add(new Node(key, val)); // OK
+buckets.add("我是捣乱的");       // 居然也 OK！编译器不报错
+// 取出来的时候很痛苦
+Node n = (Node) buckets.iterator().next(); // 必须强制转型
+// 如果取到了那个 String，这里就会直接报错崩溃！
+写了 <Node>：
+Java
+// 这是一个专门装 Node 的 Collection
+Collection<Node> buckets = new ArrayList<>();
+buckets.add(new Node(key, val)); // OK
+buckets.add("我是捣乱的");       // ❌ 编译器直接报错！红线警告！
+// 取出来的时候很安全
+Node n = buckets.iterator().next(); // 不需要转型，Java 知道出来的一定是 Node
+总结：
+    接口 (Collection) 给了你灵活性（你可以随意更换 ArrayList, LinkedList 等实现）。
+    泛型 (<Node>) 给了你安全性（保证数据类型不乱套）。 所以它们两个必须配合使用。

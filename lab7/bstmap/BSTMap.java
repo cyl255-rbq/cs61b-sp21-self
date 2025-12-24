@@ -98,22 +98,11 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Set<K> keySet() {
-        // 返回一个新的匿名 Set 对象
-        return new AbstractSet<K>() {
-
-            // 这个 Set 必须告诉别人它有多大
-            @Override
-            public int size() {
-                return BSTMap.this.size(); // 直接借用 BSTMap 的 size
-            }
-
-            // 这个 Set 最核心的：怎么遍历？
-            // 答案：直接借用你刚才辛辛苦苦写好的 BSTMapIter！
-            @Override
-            public Iterator<K> iterator() {
-                return new BSTMapIter(); // <--- 关键！这就把 keySet 和 Iterator 连起来了
-            }
-        };
+        Set<K> keys = new HashSet<>();
+        for (K key : this) {
+            keys.add(key);
+        }
+        return keys;
     }
 
     private Node min(Node node) {

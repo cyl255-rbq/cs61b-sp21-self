@@ -10,3 +10,34 @@ class hashmap.MyHashMapLLBuckets: 4.05 sec
 class hashmap.MyHashMapTSBuckets: 5.42 sec
 class hashmap.MyHashMapHSBuckets: 6.71 sec
 class hashmap.MyHashMapPQBuckets: 5.02 sec
+
+1.
+LinkedList 和 ArrayList 最快，TreeSet 和 HashSet 较慢。因为我们有扩容机制（Resizing），桶里元素很少。
+复杂数据结构（树/哈希表）的初始化和维护开销（Overhead）比简单的链表遍历要大得多。
+2.
+不会变快，甚至可能更慢。理由同上：只要扩容正常工作，桶里就没几个元素。在 3 个元素里找东西，
+线性扫描（Linear Scan）已经极快了，优化查找算法带来的提升微乎其微，反而可能因为方法调用变慢。
+只有在不扩容（所有元素挤在一个桶）的情况下，高级查找才有用。
+
+Insert random
+What would you like L to be?: 5
+
+Enter # strings to insert into hashmap.ULLMap: 800000
+--Stack Overflow -- couldn't add 800000 strings of length 5.
+
+Enter # strings to insert into your hashmap.MyHashMap: 800000
+class hashmap.MyHashMap: 0.24 sec
+
+Enter # strings to insert into Java's HashMap: 800000
+Java's Built-in HashMap: 0.16 sec
+
+
+order
+Enter # strings to insert into hashmap.ULLMap: 800000
+--Stack Overflow -- couldn't add 800000 strings.
+
+Enter # strings to insert into hashmap.MyHashMap: 800000
+class hashmap.MyHashMap: 0.17 sec
+
+Enter # strings to insert into Java's HashMap: 800000
+Java's Built-in HashMap: 0.17 sec

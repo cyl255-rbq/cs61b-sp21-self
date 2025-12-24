@@ -1,0 +1,10 @@
+// buckets 的定义就是 Collection<Node>[]
+// 这就像在说：这是一个“水果篮子”
+Collection<Node>[] buckets; 
+
+// 当你遍历时：
+for (Collection<Node> bucket : buckets) {
+    // 你在声明：我每次从篮子里拿出一个东西，我把它当作“水果(Collection)”来看待。
+    // 实际上 bucket 可能是一个 LinkedList 对象。
+    // 但既然 LinkedList 也是一种 Collection，所以这完全合法。
+}

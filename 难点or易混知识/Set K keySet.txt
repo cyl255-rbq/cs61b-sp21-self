@@ -1,0 +1,94 @@
+keySet() 到底是什么？
+一句话解释：把哈希表里所有的“Key（钥匙）”单独拿出来，打包成一个集合给你。
+1. 生活中的比喻：菜单
+想象你手里有一本菜单（Map）：
+    Key (键): 宫保鸡丁
+    Value (值): 38 元
+    Key (键): 麻婆豆腐
+    Value (值): 12 元
+这时候，服务员问你：“我们要印一张只有菜名的传单，不带价格，你把菜名给我。” 你需要给他的就是一个 keySet。
+    keySet() 的结果： [ "宫保鸡丁", "麻婆豆腐" ]
+就这么简单。它把 Value 扔掉，只保留 Key。
+2. 为什么要实现这个？
+通常是为了遍历。 很多时候用户并不关心 Value 是多少，他们只想知道：“你的哈希表里到底存了哪些东西？”
+比如：
+Java
+Set<String> dishes = menu.keySet();
+for (String dish : dishes) {
+    System.out.println(dish); // 只打印菜名
+}
+
+
+Set.of() 是 Java 9 引入的一个超好用的静态方法。
+    Set.of("A", "B")：创建一个包含 A 和 B 的 Set。
+    Set.of()：创建一个**不可变（Immutable）**的空 Set。
+
+
+还记得你之前贴的那段 Lab 提示吗？
+    "For these methods, we recommend you simply create a HashSet instance variable that holds all your keys." （对于这些方法，我们建议你简单地创建一个 HashSet 实例变量来保存所有的键。）
+这就是官方作弊码！既然你觉得难，就用这个最简单的方法。
+具体做法：
+你不需要去遍历那个复杂的 buckets 数组来收集 Key。你只需要时刻维护一个额外的名单。
+第一步：加个变量 在你的 MyHashMap 类里，加一个私有变量。
+Java
+public class MyHashMap<K, V> implements Map61B<K, V> {
+    // 原有的 buckets
+    private Collection<Node>[] buckets;
+    // 【新增】用来作弊的名单，专门存 Key
+    private Set<K> allKeys; 
+    public MyHashMap() {
+        // ... 初始化 buckets ...
+        
+        // 【新增】初始化这个 Set
+        allKeys = new HashSet<>(); 
+    }
+}
+第二步：修改 put 方法 每当你往哈希表里放东西时，顺手把 Key 也抄一份到名单里。
+Java
+@Override
+public void put(K key, V value) {
+    // ... 原有的放入 buckets 的逻辑 ...
+    
+    // 【新增】顺手记录一下 Key
+    allKeys.add(key); 
+}
+第三步：修改 remove 方法 每当你删东西时，顺手把 Key 从名单里划掉。
+Java
+@Override
+public V remove(K key) {
+    // ... 原有的从 buckets 删除的逻辑 ...
+    
+    // 【新增】如果删除成功，顺手划掉
+    if (删除成功) {
+        allKeys.remove(key);
+    }
+}
+第四步：实现 keySet() 最爽的时刻来了。因为你平时一直在维护这个名单，所以当有人调用 keySet() 时：
+Java
+@Override
+public Set<K> keySet() {
+    // 直接把名单交出去！
+    return allKeys;
+}
+如果不用那个“作弊”变量，该怎么写？（笨办法）
+如果你不想维护那个 allKeys 变量，那 keySet() 就得现场干活。逻辑和你之前的 resize 或者 iterator 差不多：
+Java
+@Override
+public Set<K> keySet() {
+    // 1. 创建一个新的空集合
+    Set<K> keys = new HashSet<>();
+    
+    // 2. 遍历所有的桶
+    for (Collection<Node> bucket : buckets) {
+        if (bucket != null) {
+            // 3. 遍历桶里的每一个节点
+            for (Node node : bucket) {
+                // 4. 把 Key 收集起来
+                keys.add(node.key);
+            }
+        }
+    }
+    
+    // 5. 返回收集好的集合
+    return keys;
+}

@@ -1,0 +1,76 @@
+public class MyHashMapIterator implements Iterator<K> {
+    
+    // 状态1：巡逻员在哪一排书架（数组下标）
+    private int arrayIndex;
+    // 状态2：巡逻员在这一排书架的具体哪本书前（当前桶的迭代器）
+    private Iterator<Node> currentShelfIterator; 
+
+    // 初始化：巡逻员进门，找到第一本有书的书架
+    public MyHashMapIterator() {
+        arrayIndex = 0;
+        currentShelfIterator = null;
+        findNextShelfWithBooks(); // 赶紧找到第一个有书的地方
+    }
+
+    // 辅助动作：这一排查完了，去找下一排有书的书架
+    private void findNextShelfWithBooks() {
+        // 如果当前书架还没查完，就别动
+        if (currentShelfIterator != null && currentShelfIterator.hasNext()) {
+            return;
+        }
+        
+        // 当前书架查完了，往后走，直到找到一个有书的书架
+        while (arrayIndex < buckets.length) {
+            Collection<Node> shelf = buckets[arrayIndex];
+            arrayIndex++; // 走到下一排
+            
+            // 如果这排书架有书
+            if (shelf != null && !shelf.isEmpty()) {
+                currentShelfIterator = shelf.iterator(); // 把手指放在这排书的开头
+                return; // 找到了，开工
+            }
+        }
+        // 如果走遍了所有书架都没书，那 currentShelfIterator 就只能是 null 了
+        currentShelfIterator = null;
+    }
+
+    @Override
+    public boolean hasNext() {
+        // 只要手指指着的地方还有书（或者是能找到下一排书），就是 true
+        return currentShelfIterator != null && currentShelfIterator.hasNext();
+    }
+
+    @Override
+    public K next() {
+        // 1. 抄下当前这本书
+        K key = currentShelfIterator.next().key;
+        
+        // 2. 抄完这本书，马上检查：这排书架是不是空了？
+        // 如果空了，赶紧走向下一排，为下一次抄写做准备
+        if (!currentShelfIterator.hasNext()) {
+            findNextShelfWithBooks();
+        }
+        
+        return key;
+    }
+}
+
+因为hasNext和isEmpty不能对null用，所有前面必须判断是否为null
+
+
+为什么你需要 findNextShelfWithBooks？（如何推导出这个辅助方法）
+如果你想不到这个辅助方法，通常是因为你想把逻辑写在 hasNext() 或者 next() 里面。
+让我们试着还原一下，如果你不写辅助方法，脑子里的逻辑是怎样的：
+痛苦的写法（把逻辑塞进 hasNext）： 当用户问 hasNext() 时，你的内心戏：
+    “呃，我现在指着的这个桶空了吗？如果空了，我得去下一个桶看看... 下一个桶要是 null 怎么办？要是也是空的怎么办？我得写个循环一直往后找，直到找到一个有货的或者数组结束...”
+你会发现，hasNext() 变得巨复杂，它不仅要“判断”，还要“寻找”。 而且，next() 里面还得再写一遍类似的逻辑：“取完这个元素后，我要不要去下一个桶？”
+思维的跃迁：维护“不变性” (Invariant)
+为了简化逻辑，高手会设立一个霸王条款（不变性）：
+    原则： 只要我的迭代器处于“等待”状态（暂停时），我的手指（currentShelfIterator）必须永远指向一个有效的、有货的、下一秒就能拿出来的元素。
+基于这个原则，思维方式就变了：
+    构造函数里： 刚进门，我不能傻站着。我必须立刻跑起来，找到第一个有书的地方，把手指按在那，然后才能休息。 -> 需要一个“寻找”动作。
+    next() 里： 我取走当前这本书后，手指悬空了。我不能就把手指悬在那，我必须立刻跑起来，找到下一个有书的地方，把手指按在那，然后才能休息。 -> 需要同一个“寻找”动作。
+结论： 既然“初始化”和“取完元素后”都需要**“跑过那些空的桶，找到下一个有货的地方”**，那么这块逻辑就必须提取出来。
+这就是 findNextShelfWithBooks 的由来。它的本质是**“快进到下一个有效数据”**。
+下次写迭代器，你就记住这个**“预加载（Pre-fetch）策略”**：
+    永远不要让指针停在空桶上。一旦当前桶空了，马上自动跳到下一个有货的桶再停下。
