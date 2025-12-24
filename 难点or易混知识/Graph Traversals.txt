@@ -1,0 +1,4 @@
+Tree traversals:
+Preorder, inorder, postorder, level order.
+Graph traversals:
+DFS preorder, DFS postorder, BFS.

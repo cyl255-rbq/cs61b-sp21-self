@@ -1,0 +1,12 @@
+BucketsSpeedTest 
+This program inserts random Strings of length L
+ Into different types of maps as <String, Integer> pairs.
+
+What would you like L to be?: 5
+
+Enter # strings to insert into each map: 10000000
+class hashmap.MyHashMapALBuckets: 4.12 sec
+class hashmap.MyHashMapLLBuckets: 4.05 sec
+class hashmap.MyHashMapTSBuckets: 5.42 sec
+class hashmap.MyHashMapHSBuckets: 6.71 sec
+class hashmap.MyHashMapPQBuckets: 5.02 sec

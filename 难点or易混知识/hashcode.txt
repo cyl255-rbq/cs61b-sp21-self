@@ -1,0 +1,82 @@
+第一条规则：Repeated calls on same obj should return same code
+（同一个对象，多次调用必须返回相同的值）
+第二条规则：Calls on equal objects should return equal codes
+（相等的对象，必须返回相同的 HashCode）
+记住这两个规则
+
+哈希表的规则:相等的对象必须有相同的哈希码
+所以
+Integer’s hashCode() function：
+public int hashCode() {
+	return super.hashCode();
+}
+这个是不可以的，因为返回的是地址的hashCode值
+Integer x = new Integer(5);
+Integer y = new Integer(5);
+这里 x 和 y 是两个不同的对象，它们住在内存的两个不同地址里！
+    按照这个错误的 hashCode() 实现，它们会得到不同的哈希码。
+    但这是不合法的行为，因为根据 .equals() 方法，x 和 y 的值都是 5，它们是相等的。相等的对象必须拥有相同的哈希码。
+
+
+
+简单来说：hashCode() 里用到的变量，必须包含在 equals() 用到的变量里面。
+我们可以用数学集合的关系来表示：
+HashCode 用到的变量⊆Equals 用到的变量
+为了让你彻底明白，我们分三种情况来看看：
+情况 1：HashCode 用了“额外”的变量（你的作业错题）
+HashCode>Equals
+    Equals 用了： name
+    HashCode 用了： name + age
+    后果： 致命 Bug！
+        假设有两个对象：
+            A: name="Tom", age=10
+            B: name="Tom", age=20
+        Equals 说： “它俩 name 都是 Tom，所以它俩是相等的。”
+        HashCode 说： “不对，一个 age 10，一个 age 20，算出来的码不一样。”
+        结局： 违反了“相等对象必须有相同 HashCode”的铁律。HashMap 会因为找不到对应的桶而丢数据。
+    这就是你作业里 Course 和 Timezone 犯的错误：HashCode 只有资格用 Equals 挑剩下的，或者和 Equals 一样，绝对不能自己“加戏”。
+情况 2：HashCode 用了“更少”的变量
+HashCode<Equals
+    Equals 用了： name + age
+    HashCode 用了： 只有 name
+    后果： 合法（Valid），但效率可能低。
+        假设有两个对象：
+            A: name="Tom", age=10
+            B: name="Tom", age=20
+        Equals 说： “age 不一样，它俩不相等。”
+        HashCode 说： “name 都是 Tom，算出来的码一样！”
+        结局： 这就是 哈希冲突 (Collision)。
+        HashMap 会把这两个不相等的对象放在同一个桶里（Bucket）。程序依然能跑，只是如果不相等的对象太多都挤在一起，查找速度会变慢。
+        这是完全允许的。
+情况 3：HashCode 和 Equals 变量完全一样（最推荐）
+HashCode=Equals
+    Equals 用了： name + age
+    HashCode 用了： name + age
+    后果： 完美。
+        既保证了“相等则码同”，又最大程度地减少了哈希冲突（因为只要有一点属性不一样，哈希码大概率就不一样，能分散到不同的桶里）。
+用了哪些变量”，而是“逻辑顺从”。
+    Hash Function 必须是 Equals 逻辑的“影分身”。
+    如果 equals 比较的是“乘积”，那 hashCode 必须也是基于“乘积”来算的（比如直接返回乘积，或者乘积 % 10）。
+    如果 equals 比较的是“和”，那 hashCode 才能用“和”。
+数学上的解释（Functional Dependency）： HashCode 的计算结果，必须完全依赖于 Equals 的判定结果。 也就是说：如果输入不同的 (a, b) 能算出相同的 Equals 结果，那么它们必须也能算出相同的 HashCode 结果。
+
+其实不用把事情想复杂，就把它当成一个**“冤案判决”**：
+    Equals 法官判决说：A 和 B 无罪释放（是相等的）。
+    HashCode 狱长却说：A 关在 8 号房，B 关在 7 号房。
+    结论： 狱长违规操作（HashCode 有 Bug）。
+之所以 a×b 和 a+b 不行，就是因为法官判相等的时候，狱长却把人关在了不同的房间。
+
+1. 绝对不允许的（Forbidden）❌
+    情况：a.equals(b) 是 True，但 a.hashCode() != b.hashCode()。
+    后果：HashMap 功能失效（Bug）。
+        明明存进去了，但是因为哈希码变了，去错桶了，死活找不到。
+    例子：你的 a×b 和 a+b 的例子（(2,6) 和 (3,4) 相等，但哈希不同）。
+2. 允许但是不推荐的（Allowed but Bad）⚠️
+    情况：a.equals(b) 是 False，但 a.hashCode() == b.hashCode()。
+    名字：这叫 哈希冲突 (Collision)。
+    后果：HashMap 变慢（Performance Issue）。
+        两个人不一样，但只有一张身份证，挤在同一个房间里。Map 依然能工作（它会进房间挨个问），只是效率低了。
+    例子：hashCode() { return 1; }。虽然很烂，所有人都挤在 1 号桶，但它是合法的程序。
+总结
+    Equal 了？ → 那 HashCode 必须一样！（必须遵守）
+    不 Equal？ → HashCode 一不一样无所谓（最好不一样，一样也能凑合）。
