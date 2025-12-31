@@ -3,8 +3,10 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -28,9 +30,35 @@ public class Commit implements Serializable {
     /** The message of this Commit. */
     private String message;
     private String parent;
-    private Instant timestamp;
-    private String hash;
+    private String anotherParent;
+    private Date timestamp;
     /* TODO: fill in the rest of this class. */
+
+    public Commit(String message, String parent){
+        this.message = message;
+        this.parent = parent;
+        if (this.parent == null) {
+            timestamp = new Date(0);
+        } else {
+            timestamp = new Date();
+        }
+    }
+
+    public String getAnotherParent() {
+        return this.anotherParent;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    public Date getDate() {
+        return this.timestamp;
+    }
+
+    public String getParent() {
+        return this.parent;
+    }
 
     public void changeMap(Map<String, String> map) {
         this.map = new HashMap<>(map);
@@ -40,28 +68,21 @@ public class Commit implements Serializable {
         return this.map;
     }
 
-    public Commit(String message, String parent){
-        this.message = message;
-        this.parent = parent;
-        if (this.parent == null) {
-            timestamp = Instant.EPOCH;
-        } else {
-            timestamp = Instant.now();
-        }
-        this.hash = sha1(serialize(this));
+    public static File findFile(String name) {
+        return join(GITLET_DIR, "objects", name);
     }
 
     public static Commit fromFile(String name) {
-        File inFile = join(GITLET_DIR, "objects", name);
-        return readObject(inFile, Commit.class);
+        return readObject(findFile(name), Commit.class);
     }
 
     public String saveCommit() {
-        File outFile = join(GITLET_DIR, "objects", this.hash);
+        String hash = sha1(serialize(this));
+        File outFile = join(GITLET_DIR, "objects", hash);
         File master = join(GITLET_DIR, "refs", "heads", "master");
         writeContents(master, hash);
         writeObject(outFile, this);
-        return this.hash;
+        return hash;
     }
 
     public boolean mapContains(String name) {

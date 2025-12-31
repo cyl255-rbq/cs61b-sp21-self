@@ -2,8 +2,8 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import static gitlet.Utils.*;
 
@@ -28,11 +28,11 @@ public class Repository implements Serializable {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static final File master = join(GITLET_DIR, "refs", "heads", "master");
 
     /* TODO: fill in the rest of this class. */
 
     private static String getHead() {
-        File master = join(GITLET_DIR, "refs", "heads", "master");
         return readContentsAsString(master);
     }
 
@@ -76,7 +76,6 @@ public class Repository implements Serializable {
         for (String name : removal.keySet()) {
             commit.commitMap().remove(name);
         }
-        File master = join(GITLET_DIR, "refs", "heads", "master");
         writeContents(master, commit.saveCommit());
         stagingArea.clear();
         stagingArea.saveStagingArea();
@@ -126,4 +125,44 @@ public class Repository implements Serializable {
             System.exit(0);
         }
     }
+
+    public static void log() {
+        File nowName = Commit.findFile(getHead());
+        Commit now = Commit.fromFile(getHead());
+        String nowParent = now.getParent();
+        while (nowParent != null) {
+            message("===");
+            message("commit %s", nowName.getName());
+            if (now.getAnotherParent() != null) {
+                message("Merge: %.7s %.7s", nowParent, now.getAnotherParent());
+            }
+            message(String.format(Locale.US, "Date: %1$ta %1$tb %1$te %1$tH:%1$tM:%1$tS %1$tY %1$tz", now.getDate()));
+            message(now.getMessage());
+            nowName = Commit.findFile(nowParent);
+            now = Commit.fromFile(nowParent);
+            nowParent = now.getParent();
+        }
+    }
+
+    public static void globalLog() {
+
+    }
+
+    public static void find() {
+
+    }
+
+    public static void status() {
+
+    }
+
+    public static void checkout1and2(String id, String name) {
+        String checkoutBlobHash = Commit.fromFile(id).commitMap().get(name);
+        File checkoutBlobFile = Blob.fromFile(checkoutBlobHash).getBlobFile();
+        File find = join(CWD, name);
+    }
+    public static void checkout3(String branchName) {
+
+    }
+
 }

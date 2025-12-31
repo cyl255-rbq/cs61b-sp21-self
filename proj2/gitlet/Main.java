@@ -19,33 +19,39 @@ public class Main {
             System.exit(0);
         }
         String firstArg = args[0];
+        initialized(firstArg);
         switch(firstArg) {
             case "init":
                 validateArgs(args, 1);
                 init();
                 break;
             case "add":
-                initialized();
                 validateArgs(args, 2);
                 add(args[1]);
                 break;
             case "commit":
-                initialized();
                 validateArgs(args, 2);
                 commit(args[1]);
                 break;
             case "rm":
-                initialized();
                 validateArgs(args, 2);
                 rm(args[1]);
                 break;
             case "log":
+                validateArgs(args, 1);
+                log();
                 break;
             case "global-log":
+                validateArgs(args, 1);
+                globalLog();
                 break;
             case "find":
+                validateArgs(args, 2);
+                find();
                 break;
             case "status":
+                validateArgs(args, 1);
+                status();
                 break;
             case "checkout":
                 break;
@@ -82,12 +88,11 @@ public class Main {
     /**
      * test whether initialized that have ".gitlet" file.
      */
-    private static void initialized() {
-        if (!GITLET_DIR.exists()) {
+    private static void initialized(String arg) {
+        if (!arg.equals("init") && !GITLET_DIR.exists()) {
             message("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
-
     }
 
 }
