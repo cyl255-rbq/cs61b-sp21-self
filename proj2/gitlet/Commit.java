@@ -69,7 +69,7 @@ public class Commit implements Serializable {
     }
 
     public static File findFile(String name) {
-        return join(GITLET_DIR, "objects", name);
+        return join(GITLET_DIR, "objects", "commits", name);
     }
 
     public static Commit fromFile(String name) {
@@ -78,7 +78,7 @@ public class Commit implements Serializable {
 
     public String saveCommit() {
         String hash = sha1(serialize(this));
-        File outFile = join(GITLET_DIR, "objects", hash);
+        File outFile = join(GITLET_DIR, "objects", "commits", hash);
         File master = join(GITLET_DIR, "refs", "heads", "master");
         writeContents(master, hash);
         writeObject(outFile, this);

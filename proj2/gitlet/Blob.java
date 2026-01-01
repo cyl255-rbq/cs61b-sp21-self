@@ -19,11 +19,11 @@ public class Blob implements Serializable {
     }
 
     public static Blob fromFile(String name) {
-        File inFile = join(GITLET_DIR, "objects", name);
+        File inFile = join(GITLET_DIR, "objects", "blobs", name);
         return readObject(inFile, Blob.class);
     }
 
-    byte[] getBlobFile() {
+    byte[] getBlobContend() {
         return this.contend;
     }
 
@@ -32,7 +32,7 @@ public class Blob implements Serializable {
     }
 
     String saveBlob() {
-        File outFile = join(GITLET_DIR, "objects", this.hash);
+        File outFile = join(GITLET_DIR, "objects", "blobs", this.hash);
         if (!outFile.exists()) {
             writeObject(outFile, this);
         }

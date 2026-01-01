@@ -47,13 +47,15 @@ public class Main {
                 break;
             case "find":
                 validateArgs(args, 2);
-                find();
+                find(args[1]);
                 break;
             case "status":
                 validateArgs(args, 1);
                 status();
                 break;
             case "checkout":
+                validateArgsCheckout(args);
+                checkout(args, args.length);
                 break;
             case "branch":
                 break;
@@ -66,6 +68,17 @@ public class Main {
             default:
                 message("No command with that name exists.");
                 System.exit(0);
+        }
+    }
+
+    private static void validateArgsCheckout(String[] args) {
+        int length = args.length;
+        if (length == 3 && args[1].equals("--")) {
+        } else if (length == 4 && args[2].equals("--")) {
+        } else if (length == 2) {
+        } else {
+            message("Incorrect operands.");
+            System.exit(0);
         }
     }
 
