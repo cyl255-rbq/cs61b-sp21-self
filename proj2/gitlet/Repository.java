@@ -2,10 +2,12 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.*;
 import java.util.Locale;
 import java.util.Map;
 
 import static gitlet.Utils.*;
+import static gitlet.Utils.plainFilenamesIn;
 
 // TODO: any imports you need here
 
@@ -172,7 +174,66 @@ public class Repository implements Serializable {
     }
 
     public static void status() {
-
+        message("=== Branches ===");
+        File heads = join(GITLET_DIR, "refs", "heads");
+        String head = readContentsAsString(join(GITLET_DIR, "HEAD")).substring(16);
+        for (String eachName : plainFilenamesIn(heads)) {
+            if (eachName.equals(head)) {
+                System.out.print("*");
+            }
+            message(eachName);
+        }
+        System.out.println();
+        message("=== Staged Files ===");
+        StagingArea stagingArea = StagingArea.fromFile();
+        Map<String, String> addition = stagingArea.addition();
+        Map<String, String> removal = stagingArea.removal();
+        List<String> additonList = new ArrayList<>(addition.keySet());
+        List<String> removalList = new ArrayList<>(removal.keySet());
+        Collections.sort(additonList);
+        Collections.sort(removalList);
+        for (String addName : additonList) {
+            message(addName);
+        }
+        System.out.println();
+        message("=== Removed Files ===");
+        for (String removeName : removalList) {
+            message(removeName);
+        }
+        System.out.println();
+        message("=== Modifications Not Staged For Commit ===");
+        List<String> modifiedNotStaged = new ArrayList<>();
+        Map<String, String> blobs = Commit.fromFile(getHead()).commitMap();
+        for (String fileName : blobs.keySet()) {
+            File file = join(CWD, fileName);
+            if (addition.containsKey(fileName)) {
+                continue;
+            }
+            if (!removal.containsKey(fileName) && !blobs.get(fileName).equals(new Blob(file).getHash())) {
+                modifiedNotStaged.add(fileName + " (modified)");
+            } else if (!file.exists() && !removal.containsKey(fileName)) {
+                modifiedNotStaged.add(fileName + " (deleted)");
+            }
+        }
+        for (String fileName : addition.keySet()) {
+            File file = join(CWD, fileName);
+            if (!file.exists()) {
+                modifiedNotStaged.add(fileName + " (deleted)");
+            } else if (!addition.get(fileName).equals(new Blob(file).getHash())) {
+                modifiedNotStaged.add(fileName + " (modified)");
+            }
+        }
+        Collections.sort(modifiedNotStaged);
+        for (String s : modifiedNotStaged) {
+            message(s);
+        }
+        System.out.println();
+        message("=== Untracked Files ===");
+        for (String fileName : plainFilenamesIn(CWD)) {
+            if (!stagingArea.addition().containsKey(fileName) && !blobs.containsKey(fileName)) {
+                message(fileName);
+            }
+        }
     }
 
     public static void checkout(String[] args, int n) {
@@ -200,6 +261,7 @@ public class Repository implements Serializable {
         File find = join(CWD, name);
         writeContents(find, (Object) checkoutBlobContend);
     }
+
     public static void checkoutBranch(String branchName) {
         File branch = Commit.findFile(branchName);
         if (!branch.exists()) {
