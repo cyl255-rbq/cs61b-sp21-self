@@ -237,7 +237,7 @@ public class Repository implements Serializable {
         System.out.println();
         message("=== Untracked Files ===");
         for (String fileName : plainFilenamesIn(CWD)) {
-            if ((!stagingArea.addition().containsKey(fileName) && !blobs.containsKey(fileName)) || stagingArea.removal().containsKey(fileName)) {
+            if (untracked(fileName)) {
                 message(fileName);
             }
         }
@@ -273,15 +273,22 @@ public class Repository implements Serializable {
         writeContents(find, (Object) checkoutBlobContend);
     }
 
+    private static boolean untracked(String fileName) {
+        Map<String, String> blobsCurrentCommit = Commit.fromFile(getHeadHash()).commitMap();
+        StagingArea stagingArea = StagingArea.fromFile();
+        boolean inCurrent = blobsCurrentCommit.containsKey(fileName);
+        boolean inAdd = stagingArea.addition().containsKey(fileName);
+        boolean inRm = stagingArea.removal().containsKey(fileName);
+        return ((!inCurrent && !inAdd) || inRm);
+    }
+
     private static void helpCheckoutBranch(String branchHash) {
         Commit branchCommit = Commit.fromFile(branchHash);
         Map<String, String> blobs = branchCommit.commitMap();
-        Map<String, String> blobsCurrentCommit = Commit.fromFile(getHeadHash()).commitMap();
         StagingArea stagingArea = StagingArea.fromFile();
         for (String fileName : plainFilenamesIn(CWD)) {
-            if (!stagingArea.addition().containsKey(fileName) &&
-                    !stagingArea.removal().containsKey(fileName) &&
-                    !blobsCurrentCommit.containsKey(fileName) && blobs.containsKey(fileName)) {
+            boolean inTarget = blobs.containsKey(fileName);
+            if (inTarget && untracked(fileName)) {
                 message("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
