@@ -30,6 +30,10 @@ public class StagingArea implements Serializable {
         return additon.containsKey(name);
     }
 
+    public boolean removalContains(String name) {
+        return removal.containsKey(name);
+    }
+
     public void stagingAdd(String name, String hash) {
         if (removal.containsKey(name)) {
             removal.remove(name);

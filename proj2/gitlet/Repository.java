@@ -51,7 +51,7 @@ public class Repository implements Serializable {
         heads.mkdirs();
         File commits = join(GITLET_DIR, "objects", "commits");
         commits.mkdirs();
-        File blobs = join(GITLET_DIR, "objects", "commits");
+        File blobs = join(GITLET_DIR, "objects", "blobs");
         blobs.mkdir();
         File HEAD = join(GITLET_DIR, "HEAD");
         writeContents(HEAD, "ref: refs/heads/master\n");
@@ -103,7 +103,9 @@ public class Repository implements Serializable {
         StagingArea stagingArea = StagingArea.fromFile();
         Commit now = Commit.fromFile(getHead());
         if (now.mapContains(name) && now.mapGetValue(name).equals(tempBlobHash)) {
-            if (stagingArea.additionContains(name)) {
+            if (stagingArea.removalContains(name)) {
+                stagingArea.stagingAdd(name, tempBlobHash);
+            } else if (stagingArea.additionContains(name)) {
                 stagingArea.stagingRemove(name, tempBlobHash);
             }
         } else {
@@ -141,14 +143,18 @@ public class Repository implements Serializable {
         }
         message(String.format(Locale.US, "Date: %1$ta %1$tb %1$te %1$tH:%1$tM:%1$tS %1$tY %1$tz", now.getDate()));
         message(now.getMessage());
+        System.out.println();
     }
 
     public static void log() {
         File nowFile = Commit.findFile(getHead());
         Commit now = Commit.fromFile(getHead());
         String nowParent = now.getParent();
-        while (nowParent != null) {
+        while (true) {
             helpLog(nowFile, now, nowParent);
+            if (nowParent == null) {
+                break;
+            }
             nowFile = Commit.findFile(nowParent);
             now = Commit.fromFile(nowParent);
             nowParent = now.getParent();
@@ -176,7 +182,7 @@ public class Repository implements Serializable {
     public static void status() {
         message("=== Branches ===");
         File heads = join(GITLET_DIR, "refs", "heads");
-        String head = readContentsAsString(join(GITLET_DIR, "HEAD")).substring(16);
+        String head = readContentsAsString(join(GITLET_DIR, "HEAD")).substring(16).trim();
         for (String eachName : plainFilenamesIn(heads)) {
             if (eachName.equals(head)) {
                 System.out.print("*");
@@ -209,10 +215,10 @@ public class Repository implements Serializable {
             if (addition.containsKey(fileName)) {
                 continue;
             }
-            if (!removal.containsKey(fileName) && !blobs.get(fileName).equals(new Blob(file).getHash())) {
-                modifiedNotStaged.add(fileName + " (modified)");
-            } else if (!file.exists() && !removal.containsKey(fileName)) {
+            if (!file.exists() && !removal.containsKey(fileName)) {
                 modifiedNotStaged.add(fileName + " (deleted)");
+            } else if (!removal.containsKey(fileName) && !blobs.get(fileName).equals(new Blob(file).getHash())) {
+                modifiedNotStaged.add(fileName + " (modified)");
             }
         }
         for (String fileName : addition.keySet()) {
