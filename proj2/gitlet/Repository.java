@@ -237,7 +237,7 @@ public class Repository implements Serializable {
         System.out.println();
         message("=== Untracked Files ===");
         for (String fileName : plainFilenamesIn(CWD)) {
-            if (!stagingArea.addition().containsKey(fileName) && !blobs.containsKey(fileName)) {
+            if ((!stagingArea.addition().containsKey(fileName) && !blobs.containsKey(fileName)) || stagingArea.removal().containsKey(fileName)) {
                 message(fileName);
             }
         }
@@ -276,11 +276,12 @@ public class Repository implements Serializable {
     private static void helpCheckoutBranch(String branchHash) {
         Commit branchCommit = Commit.fromFile(branchHash);
         Map<String, String> blobs = branchCommit.commitMap();
+        Map<String, String> blobsCurrentCommit = Commit.fromFile(getHeadHash()).commitMap();
         StagingArea stagingArea = StagingArea.fromFile();
         for (String fileName : plainFilenamesIn(CWD)) {
             if (!stagingArea.addition().containsKey(fileName) &&
-                    !stagingArea.removal().containsKey(fileName) && 
-                    blobs.containsKey(fileName)) {
+                    !stagingArea.removal().containsKey(fileName) &&
+                    !blobsCurrentCommit.containsKey(fileName) && blobs.containsKey(fileName)) {
                 message("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
