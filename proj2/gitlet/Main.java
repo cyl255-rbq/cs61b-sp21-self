@@ -58,10 +58,16 @@ public class Main {
                 checkout(args, args.length);
                 break;
             case "branch":
+                validateArgs(args, 2);
+                branch(args[1]);
                 break;
             case "rm-branch":
+                validateArgs(args, 2);
+                rmBranch(args[1]);
                 break;
             case "reset":
+                validateArgs(args, 2);
+                reset(args[1]);
                 break;
             case "merge":
                 break;

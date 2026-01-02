@@ -2,11 +2,9 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -68,8 +66,8 @@ public class Commit implements Serializable {
         return this.map;
     }
 
-    public static File findFile(String name) {
-        return join(GITLET_DIR, "objects", "commits", name);
+    public static File findFile(String hash) {
+        return join(GITLET_DIR, "objects", "commits", hash);
     }
 
     public static Commit fromFile(String name) {

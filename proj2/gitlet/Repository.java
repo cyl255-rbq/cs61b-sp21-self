@@ -30,16 +30,24 @@ public class Repository implements Serializable {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    public static final File master = join(GITLET_DIR, "refs", "heads", "master");
+    public static final File heads = join(GITLET_DIR, "refs", "heads");
+    public static final File HEAD = join(GITLET_DIR, "HEAD");
+    public static final File commits = join(GITLET_DIR, "objects", "commits");
+    public static final File blobs = join(GITLET_DIR, "objects", "blobs");
 
     /* TODO: fill in the rest of this class. */
 
-    private static String getHead() {
-        return readContentsAsString(master);
+    private static String getHeadName() {
+        return readContentsAsString(HEAD).substring(16).trim();
+    }
+
+    private static String getHeadHash() {
+        File head = join(heads, getHeadName());
+        return readContentsAsString(head);
     }
 
     private static String getBranchHead(String name) {
-        return readContentsAsString(join(GITLET_DIR, "refs", "heads", name));
+        return readContentsAsString(join(heads, name));
     }
 
     public static void init() {
@@ -47,19 +55,15 @@ public class Repository implements Serializable {
             message("A Gitlet version-control system already exists in the current directory.");
             return;
         }
-        File heads = join(GITLET_DIR, "refs", "heads");
         heads.mkdirs();
-        File commits = join(GITLET_DIR, "objects", "commits");
         commits.mkdirs();
-        File blobs = join(GITLET_DIR, "objects", "blobs");
         blobs.mkdir();
-        File HEAD = join(GITLET_DIR, "HEAD");
         writeContents(HEAD, "ref: refs/heads/master\n");
         commit("initial commit", null); //commit ↓
     }
 
     public static void commit(String message) {
-        commit(message, getHead());
+        commit(message, getHeadHash());
     }
 
     private static void commit(String message, String parent) {
@@ -83,7 +87,7 @@ public class Repository implements Serializable {
         for (String name : removal.keySet()) {
             commit.commitMap().remove(name);
         }
-        writeContents(master, commit.saveCommit());
+        writeContents(join(heads, getHeadName()), commit.saveCommit());
         stagingArea.clear();
         stagingArea.saveStagingArea();
     }
@@ -101,7 +105,7 @@ public class Repository implements Serializable {
             new StagingArea().saveStagingArea();
         }
         StagingArea stagingArea = StagingArea.fromFile();
-        Commit now = Commit.fromFile(getHead());
+        Commit now = Commit.fromFile(getHeadHash());
         if (now.mapContains(name) && now.mapGetValue(name).equals(tempBlobHash)) {
             if (stagingArea.removalContains(name)) {
                 stagingArea.stagingAdd(name, tempBlobHash);
@@ -118,7 +122,7 @@ public class Repository implements Serializable {
     public static void rm(String name) {
         testIndex("No reason to remove the file.");
         StagingArea stagingArea = StagingArea.fromFile();
-        Commit now = Commit.fromFile(getHead());
+        Commit now = Commit.fromFile(getHeadHash());
         if (!stagingArea.additionContains(name) && !now.mapContains(name)) {
             message("No reason to remove the file.");
         } else {
@@ -147,8 +151,8 @@ public class Repository implements Serializable {
     }
 
     public static void log() {
-        File nowFile = Commit.findFile(getHead());
-        Commit now = Commit.fromFile(getHead());
+        File nowFile = Commit.findFile(getHeadHash());
+        Commit now = Commit.fromFile(getHeadHash());
         String nowParent = now.getParent();
         while (true) {
             helpLog(nowFile, now, nowParent);
@@ -162,7 +166,6 @@ public class Repository implements Serializable {
     }
 
     public static void globalLog() {
-        File commits = join(GITLET_DIR, "objects", "commits");
         for (String eachName : plainFilenamesIn(commits)) {
             Commit now = Commit.fromFile(eachName);
             File nowFile = Commit.findFile(eachName);
@@ -171,7 +174,6 @@ public class Repository implements Serializable {
     }
 
     public static void find(String message) {
-        File commits = join(GITLET_DIR, "objects", "commits");
         for (String eachName : plainFilenamesIn(commits)) {
             if (Commit.fromFile(eachName).getMessage().equals(message)) {
                 message(eachName);
@@ -181,8 +183,7 @@ public class Repository implements Serializable {
 
     public static void status() {
         message("=== Branches ===");
-        File heads = join(GITLET_DIR, "refs", "heads");
-        String head = readContentsAsString(join(GITLET_DIR, "HEAD")).substring(16).trim();
+        String head = readContentsAsString(HEAD).substring(16).trim();
         for (String eachName : plainFilenamesIn(heads)) {
             if (eachName.equals(head)) {
                 System.out.print("*");
@@ -209,7 +210,7 @@ public class Repository implements Serializable {
         System.out.println();
         message("=== Modifications Not Staged For Commit ===");
         List<String> modifiedNotStaged = new ArrayList<>();
-        Map<String, String> blobs = Commit.fromFile(getHead()).commitMap();
+        Map<String, String> blobs = Commit.fromFile(getHeadHash()).commitMap();
         for (String fileName : blobs.keySet()) {
             File file = join(CWD, fileName);
             if (addition.containsKey(fileName)) {
@@ -244,7 +245,7 @@ public class Repository implements Serializable {
 
     public static void checkout(String[] args, int n) {
         if (n == 3) {
-            checkoutFile(getHead(), args[2]);
+            checkoutFile(getHeadHash(), args[2]);
         } else if (n == 4) {
             checkoutFile(args[1], args[3]);
         } else {
@@ -252,12 +253,16 @@ public class Repository implements Serializable {
         }
     }
 
-    public static void checkoutFile(String hash, String name) {
+    private static void helpCheckoutExist(String hash) {
         File checkoutFile = Commit.findFile(hash);
-        if (!hash.equals(getHead()) && !checkoutFile.exists()) {
+        if (!checkoutFile.exists()) {
             message("No commit with that id exists.");
-            return;
+            System.exit(0);
         }
+    }
+
+    public static void checkoutFile(String hash, String name) {
+        helpCheckoutExist(hash);
         String checkoutBlobHash = Commit.fromFile(hash).commitMap().get(name);
         if (checkoutBlobHash == null) {
             message("File does not exist in that commit.");
@@ -268,24 +273,16 @@ public class Repository implements Serializable {
         writeContents(find, (Object) checkoutBlobContend);
     }
 
-    public static void checkoutBranch(String branchName) {
-        File branch = Commit.findFile(branchName);
-        if (!branch.exists()) {
-            message("No such branch exists.");
-            return;
-        }
-        if (readContentsAsString(branch).equals(getHead())) {
-            message("No need to checkout the current branch.");
-            return;
-        }
-        Commit branchCommit = Commit.fromFile(getBranchHead(branchName));
+    private static void helpCheckoutBranch(String branchHash) {
+        Commit branchCommit = Commit.fromFile(branchHash);
         Map<String, String> blobs = branchCommit.commitMap();
         StagingArea stagingArea = StagingArea.fromFile();
         for (String fileName : plainFilenamesIn(CWD)) {
             if (!stagingArea.addition().containsKey(fileName) &&
-                !stagingArea.removal().containsKey(fileName) && blobs.containsKey(fileName)) {
+                    !stagingArea.removal().containsKey(fileName) && 
+                    blobs.containsKey(fileName)) {
                 message("There is an untracked file in the way; delete it, or add and commit it first.");
-                return;
+                System.exit(0);
             }
         }
         for (String fileName : plainFilenamesIn(CWD)) {
@@ -296,10 +293,50 @@ public class Repository implements Serializable {
         for (String file : blobs.keySet()) {
             writeContents(join(CWD, file), (Object) Blob.fromFile(blobs.get(file)).getBlobContend());
         }
-        File HEAD = join(GITLET_DIR, "HEAD");
-        writeContents(HEAD, "ref: refs/heads/%s\n", branchName);
         stagingArea.clear();
         stagingArea.saveStagingArea();
+    }
+
+    public static void checkoutBranch(String branchName) {
+        File branch = join(heads, branchName);
+        if (!branch.exists()) {
+            message("No such branch exists.");
+            return;
+        }
+        if (branchName.equals(getHeadName())) {
+            message("No need to checkout the current branch.");
+            return;
+        }
+        helpCheckoutBranch(readContentsAsString(join(heads, branchName)));
+        writeContents(HEAD, "ref: refs/heads/", branchName, "\n");
+    }
+
+    public static void branch(String branchName) {
+        File branch = join(heads, branchName);
+        if (branch.exists()) {
+            message("A branch with that name already exists.");
+            return;
+        }
+        writeContents(branch, getHeadHash());
+    }
+
+    public static void rmBranch(String branchName) {
+        File branch = join(heads, branchName);
+        if (branchName.equals(getHeadName())) {
+            message("Cannot remove the current branch.");
+            return;
+        }
+        if (!branch.exists()) {
+            message("A branch with that name does not exist.");
+            return;
+        }
+        branch.delete();
+    }
+
+    public static void reset(String commitHash) {
+        helpCheckoutExist(commitHash);
+        helpCheckoutBranch(commitHash);
+        writeContents(join(heads, getHeadName()), commitHash);
     }
 
 }
