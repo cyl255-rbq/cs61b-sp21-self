@@ -439,13 +439,13 @@ public class Repository implements Serializable {
         Set<String> splitSet = splitMap.keySet();
         for (String file : branchSet) {
             if (!splitSet.contains(file)) {
-                File currentContent = join(BLOBS, currentMap.get(file));
-                String branchContent = readContentsAsString(join(BLOBS, branchMap.get(file)));
                 if (!currentSet.contains(file)) {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    helpConflictContent(file, readContentsAsString(currentContent), branchContent);
+                    String currentContent = readContentsAsString(join(BLOBS, currentMap.get(file)));
+                    String branchContent = readContentsAsString(join(BLOBS, branchMap.get(file)));
+                    helpConflictContent(file, currentContent, branchContent);
                     conflict = true;
                     add(file);
                 }
@@ -510,8 +510,8 @@ public class Repository implements Serializable {
         }
     }
 
-    private static void helpConflictContent(String file, String currentContent, String branchContent) {
-        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + currentContent
+    private static void helpConflictContent(String file, String curContent, String branchContent) {
+        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + curContent
                 + "=======\n" + branchContent + ">>>>>>>\n");
     }
 
