@@ -182,7 +182,7 @@ public class Repository implements Serializable {
             message("Found no commit with that message.");
         }
     }
-    
+
     public static void status() {
         File index = join(GITLET_DIR, "index");
         if (!index.exists()) {
@@ -223,10 +223,10 @@ public class Repository implements Serializable {
                 continue;
             }
             boolean removalContain = removal.contains(fileName);
-            boolean checkBlobEqual = blobs.get(fileName).equals(new Blob(file).getHash());
+            String blobHash = blobs.get(fileName);
             if (!file.exists() && !removal.contains(fileName)) {
                 modifiedNotStaged.add(fileName + " (deleted)");
-            } else if (!removalContain && !checkBlobEqual) {
+            } else if (!removalContain && !blobHash.equals(new Blob(file).getHash())) {
                 modifiedNotStaged.add(fileName + " (modified)");
             }
         }
@@ -297,11 +297,13 @@ public class Repository implements Serializable {
         for (String fileName : plainFilenamesIn(CWD)) {
             boolean inTarget = blobs.containsKey(fileName);
             if (inTarget && untracked(fileName)) {
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                String error = "There is an untracked file in the way; delete it, or add and commit it first.";
+                message(error);
                 System.exit(0);
             }
         }
-        for (String fileName : plainFilenamesIn(CWD)) {
+        Map<String, String> currentMap = Commit.fromFile(getHeadHash()).commitMap();
+        for (String fileName : currentMap.keySet()) {
             if (!branchCommit.mapContains(fileName)) {
                 restrictedDelete(join(CWD, fileName));
             }
@@ -470,8 +472,9 @@ public class Repository implements Serializable {
                         conflict = true;
                         add(file);
                     } else if (!branchFileHash.equals(currentFileHash)) {
-                        helpConflictContent(file, readContentsAsString(join(BLOBS, currentFileHash)),
-                                readContentsAsString(join(BLOBS, branchFileHash)));
+                        String currentString = readContentsAsString(join(BLOBS, currentFileHash));
+                        String branchString = readContentsAsString(join(BLOBS, branchFileHash));
+                        helpConflictContent(file, currentString, branchString);
                         conflict = true;
                         add(file);
                     }
@@ -499,7 +502,8 @@ public class Repository implements Serializable {
             boolean distinctFromCurrent = !isSame(branchHash, currentHash);
             boolean total = givenChanged && distinctFromCurrent;
             if (total && untracked(fileName)) {
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                String error = "There is an untracked file in the way; delete it, or add and commit it first.";
+                message(error);
                 System.exit(0);
             }
         }
