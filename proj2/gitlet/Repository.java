@@ -511,40 +511,8 @@ public class Repository implements Serializable {
     }
 
     private static void helpConflictContent(String file, String curContent, String branchContent) {
-        // 1. 暴力清洗：把 Windows 的 \r\n 统统替换成 \n
-        if (curContent != null) {
-            curContent = curContent.replace("\r\n", "\n");
-        } else {
-            curContent = "";
-        }
-
-        if (branchContent != null) {
-            branchContent = branchContent.replace("\r\n", "\n");
-        } else {
-            branchContent = "";
-        }
-
-        // 2. 拼装（沿用刚才的智能补全逻辑）
-        StringBuilder sb = new StringBuilder();
-        sb.append("<<<<<<< HEAD\n");
-
-        sb.append(curContent);
-        // 只有内容不为空，且最后不是 \n 的时候，补一个 \n
-        if (!curContent.isEmpty() && !curContent.endsWith("\n")) {
-            sb.append("\n");
-        }
-
-        sb.append("=======\n");
-
-        sb.append(branchContent);
-        // 同上
-        if (!branchContent.isEmpty() && !branchContent.endsWith("\n")) {
-            sb.append("\n");
-        }
-
-        sb.append(">>>>>>>\n");
-
-        writeContents(join(CWD, file), sb.toString());
+        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + curContent
+                + "=======\n" + branchContent + ">>>>>>>");
     }
 
     private static boolean isSame(String a, String b) {
