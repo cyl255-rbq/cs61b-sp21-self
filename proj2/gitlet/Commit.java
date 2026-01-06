@@ -28,7 +28,7 @@ public class Commit implements Serializable {
     private String anotherParent;
     private Date timestamp;
 
-    public Commit(String message, String parent, String anotherParent){
+    public Commit(String message, String parent, String anotherParent) {
         this.message = message;
         this.parent = parent;
         this.anotherParent = anotherParent;
@@ -55,8 +55,8 @@ public class Commit implements Serializable {
         return this.parent;
     }
 
-    public void changeMap(Map<String, String> map) {
-        this.map = new HashMap<>(map);
+    public void changeMap(Map<String, String> otherMap) {
+        this.map = new HashMap<>(otherMap);
     }
 
     public Map<String, String> commitMap() {

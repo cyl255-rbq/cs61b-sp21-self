@@ -27,10 +27,10 @@ public class Repository implements Serializable {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    public static final File heads = join(GITLET_DIR, "refs", "heads");
+    public static final File HEADS = join(GITLET_DIR, "refs", "heads");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
-    public static final File commits = join(GITLET_DIR, "objects", "commits");
-    public static final File blobs = join(GITLET_DIR, "objects", "blobs");
+    public static final File COMMITS = join(GITLET_DIR, "objects", "commits");
+    public static final File BLOBS = join(GITLET_DIR, "objects", "blobs");
 
 
 
@@ -39,12 +39,12 @@ public class Repository implements Serializable {
     }
 
     private static String getHeadHash() {
-        File head = join(heads, getHeadName());
+        File head = join(HEADS, getHeadName());
         return readContentsAsString(head);
     }
 
     private static String getBranchHead(String name) {
-        return readContentsAsString(join(heads, name));
+        return readContentsAsString(join(HEADS, name));
     }
 
     public static void init() {
@@ -52,9 +52,9 @@ public class Repository implements Serializable {
             message("A Gitlet version-control system already exists in the current directory.");
             return;
         }
-        heads.mkdirs();
-        commits.mkdirs();
-        blobs.mkdir();
+        HEADS.mkdirs();
+        COMMITS.mkdirs();
+        BLOBS.mkdir();
         writeContents(HEAD, "ref: refs/heads/master\n");
         commit("initial commit", null, null);
     }
@@ -73,7 +73,7 @@ public class Repository implements Serializable {
         commit.changeMap(Commit.fromFile(parent).commitMap());
         StagingArea stagingArea = StagingArea.fromFile();
         Map<String, String> addition = stagingArea.addition();
-        Map<String, String> removal = stagingArea.removal();
+        Set<String> removal = stagingArea.removal();
         if (addition.isEmpty() && removal.isEmpty()) {
             message("No changes added to the commit.");
             return;
@@ -81,10 +81,10 @@ public class Repository implements Serializable {
         for (String name : addition.keySet()) {
             commit.commitMap().put(name, addition.get(name));
         }
-        for (String name : removal.keySet()) {
+        for (String name : removal) {
             commit.commitMap().remove(name);
         }
-        writeContents(join(heads, getHeadName()), commit.saveCommit());
+        writeContents(join(HEADS, getHeadName()), commit.saveCommit());
         stagingArea.clear();
         stagingArea.saveStagingArea();
     }
@@ -107,7 +107,7 @@ public class Repository implements Serializable {
             if (stagingArea.removalContains(name)) {
                 stagingArea.stagingAdd(name, tempBlobHash);
             } else if (stagingArea.additionContains(name)) {
-                stagingArea.stagingRemove(name, tempBlobHash);
+                stagingArea.stagingRemove(name);
             }
         } else {
             stagingArea.stagingAdd(name, tempBlobHash);
@@ -123,8 +123,7 @@ public class Repository implements Serializable {
         if (!stagingArea.additionContains(name) && !now.mapContains(name)) {
             message("No reason to remove the file.");
         } else {
-            Blob tempBlob = new Blob(join(CWD, name));
-            stagingArea.stagingRemove(name, tempBlob.getHash());
+            stagingArea.stagingRemove(name);
             stagingArea.saveStagingArea();
         }
     }
@@ -142,7 +141,8 @@ public class Repository implements Serializable {
         if (now.getAnotherParent() != null) {
             message("Merge: %.7s %.7s", nowParent, now.getAnotherParent());
         }
-        message(String.format(Locale.US, "Date: %1$ta %1$tb %1$te %1$tH:%1$tM:%1$tS %1$tY %1$tz", now.getDate()));
+        String format = "Date: %1$ta %1$tb %1$te %1$tH:%1$tM:%1$tS %1$tY %1$tz";
+        message(String.format(Locale.US, format, now.getDate()));
         message(now.getMessage());
         System.out.println();
     }
@@ -163,7 +163,7 @@ public class Repository implements Serializable {
     }
 
     public static void globalLog() {
-        for (String eachName : plainFilenamesIn(commits)) {
+        for (String eachName : plainFilenamesIn(COMMITS)) {
             Commit now = Commit.fromFile(eachName);
             File nowFile = Commit.findFile(eachName);
             helpLog(nowFile, now, now.getParent());
@@ -171,17 +171,26 @@ public class Repository implements Serializable {
     }
 
     public static void find(String message) {
-        for (String eachName : plainFilenamesIn(commits)) {
+        boolean find = false;
+        for (String eachName : plainFilenamesIn(COMMITS)) {
             if (Commit.fromFile(eachName).getMessage().equals(message)) {
                 message(eachName);
+                find = true;
             }
         }
+        if (!find) {
+            message("Found no commit with that message.");
+        }
     }
-
+    
     public static void status() {
+        File index = join(GITLET_DIR, "index");
+        if (!index.exists()) {
+            new StagingArea().saveStagingArea();
+        }
         message("=== Branches ===");
         String head = readContentsAsString(HEAD).substring(16).trim();
-        for (String eachName : plainFilenamesIn(heads)) {
+        for (String eachName : plainFilenamesIn(HEADS)) {
             if (eachName.equals(head)) {
                 System.out.print("*");
             }
@@ -191,9 +200,9 @@ public class Repository implements Serializable {
         message("=== Staged Files ===");
         StagingArea stagingArea = StagingArea.fromFile();
         Map<String, String> addition = stagingArea.addition();
-        Map<String, String> removal = stagingArea.removal();
+        Set<String> removal = stagingArea.removal();
         List<String> additonList = new ArrayList<>(addition.keySet());
-        List<String> removalList = new ArrayList<>(removal.keySet());
+        List<String> removalList = new ArrayList<>(removal);
         Collections.sort(additonList);
         Collections.sort(removalList);
         for (String addName : additonList) {
@@ -213,9 +222,11 @@ public class Repository implements Serializable {
             if (addition.containsKey(fileName)) {
                 continue;
             }
-            if (!file.exists() && !removal.containsKey(fileName)) {
+            boolean removalContain = removal.contains(fileName);
+            boolean checkBlobEqual = blobs.get(fileName).equals(new Blob(file).getHash());
+            if (!file.exists() && !removal.contains(fileName)) {
                 modifiedNotStaged.add(fileName + " (deleted)");
-            } else if (!removal.containsKey(fileName) && !blobs.get(fileName).equals(new Blob(file).getHash())) {
+            } else if (!removalContain && !checkBlobEqual) {
                 modifiedNotStaged.add(fileName + " (modified)");
             }
         }
@@ -275,7 +286,7 @@ public class Repository implements Serializable {
         StagingArea stagingArea = StagingArea.fromFile();
         boolean inCurrent = blobsCurrentCommit.containsKey(fileName);
         boolean inAdd = stagingArea.addition().containsKey(fileName);
-        boolean inRm = stagingArea.removal().containsKey(fileName);
+        boolean inRm = stagingArea.removal().contains(fileName);
         return ((!inCurrent && !inAdd) || inRm);
     }
 
@@ -296,14 +307,15 @@ public class Repository implements Serializable {
             }
         }
         for (String file : blobs.keySet()) {
-            writeContents(join(CWD, file), (Object) Blob.fromFile(blobs.get(file)).getBlobContend());
+            Object blobContend = Blob.fromFile(blobs.get(file)).getBlobContend();
+            writeContents(join(CWD, file), blobContend);
         }
         stagingArea.clear();
         stagingArea.saveStagingArea();
     }
 
     public static void checkoutBranch(String branchName) {
-        File branch = join(heads, branchName);
+        File branch = join(HEADS, branchName);
         if (!branch.exists()) {
             message("No such branch exists.");
             return;
@@ -317,7 +329,7 @@ public class Repository implements Serializable {
     }
 
     public static void branch(String branchName) {
-        File branch = join(heads, branchName);
+        File branch = join(HEADS, branchName);
         if (branch.exists()) {
             message("A branch with that name already exists.");
             return;
@@ -326,7 +338,7 @@ public class Repository implements Serializable {
     }
 
     public static void rmBranch(String branchName) {
-        File branch = join(heads, branchName);
+        File branch = join(HEADS, branchName);
         if (branchName.equals(getHeadName())) {
             message("Cannot remove the current branch.");
             return;
@@ -341,7 +353,7 @@ public class Repository implements Serializable {
     public static void reset(String commitHash) {
         helpCheckoutExist(commitHash);
         helpCheckoutBranch(commitHash);
-        writeContents(join(heads, getHeadName()), commitHash);
+        writeContents(join(HEADS, getHeadName()), commitHash);
     }
 
     private static Set<String> helpBuildSet() {
@@ -392,7 +404,7 @@ public class Repository implements Serializable {
             message("You have uncommitted changes.");
             return;
         }
-        File target = join(heads, branchName);
+        File target = join(HEADS, branchName);
         if (!target.exists()) {
             message("A branch with that name does not exist.");
             return;
@@ -427,12 +439,13 @@ public class Repository implements Serializable {
         Set<String> splitSet = splitMap.keySet();
         for (String file : branchSet) {
             if (!splitSet.contains(file)) {
+                String currentContent = readContentsAsString(join(BLOBS, currentMap.get(file)));
+                String branchContent = readContentsAsString(join(BLOBS, branchMap.get(file)));
                 if (!currentSet.contains(file)) {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    helpConflictContent(file, readContentsAsString(join(blobs, currentMap.get(file))),
-                            readContentsAsString(join(blobs, branchMap.get(file))));
+                    helpConflictContent(file, currentContent, branchContent);
                     conflict = true;
                     add(file);
                 }
@@ -450,20 +463,20 @@ public class Repository implements Serializable {
                     add(file);
                 }
             } else if (!splitFileHash.equals(branchFileHash)) {
-                if (branchFileHash!=null) {
+                if (branchFileHash != null) {
                     if (currentFileHash == null) {
                         helpConflictContent(file, "",
-                                readContentsAsString(join(blobs, branchFileHash)));
+                                readContentsAsString(join(BLOBS, branchFileHash)));
                         conflict = true;
                         add(file);
                     } else if (!branchFileHash.equals(currentFileHash)) {
-                        helpConflictContent(file, readContentsAsString(join(blobs, currentFileHash)),
-                                readContentsAsString(join(blobs, branchFileHash)));
+                        helpConflictContent(file, readContentsAsString(join(BLOBS, currentFileHash)),
+                                readContentsAsString(join(BLOBS, branchFileHash)));
                         conflict = true;
                         add(file);
                     }
                 } else if (currentFileHash != null) {
-                    helpConflictContent(file, readContentsAsString(join(blobs, currentFileHash)),
+                    helpConflictContent(file, readContentsAsString(join(BLOBS, currentFileHash)),
                             "");
                     conflict = true;
                     add(file);
@@ -492,9 +505,9 @@ public class Repository implements Serializable {
         }
     }
 
-    private static void helpConflictContent(String file, String currentReadAsStringContent, String branchReadAsStringContent) {
-        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + currentReadAsStringContent
-                + "=======\n" + branchReadAsStringContent + ">>>>>>>\n");
+    private static void helpConflictContent(String file, String currentContent, String branchContent) {
+        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + currentContent
+                + "=======\n" + branchContent + ">>>>>>>\n");
     }
 
     private static boolean isSame(String a, String b) {

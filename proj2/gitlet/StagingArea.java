@@ -3,7 +3,9 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
@@ -11,18 +13,18 @@ import static gitlet.Utils.*;
 public class StagingArea implements Serializable {
 
     private Map<String, String> additon;
-    private Map<String, String> removal;
+    private Set<String> removal;
 
     public StagingArea() {
         additon = new HashMap<>();
-        removal = new HashMap<>();
+        removal = new HashSet<>();
     }
 
     public Map<String, String> addition() {
         return this.additon;
     }
 
-    public Map<String, String> removal() {
+    public Set<String> removal() {
         return this.removal;
     }
 
@@ -31,22 +33,22 @@ public class StagingArea implements Serializable {
     }
 
     public boolean removalContains(String name) {
-        return removal.containsKey(name);
+        return removal.contains(name);
     }
 
     public void stagingAdd(String name, String hash) {
-        if (removal.containsKey(name)) {
+        if (removal.contains(name)) {
             removal.remove(name);
         } else {
-            additon.put(name,hash);
+            additon.put(name, hash);
         }
     }
 
-    public void stagingRemove(String name, String hash) {
+    public void stagingRemove(String name) {
         if (additon.containsKey(name)) {
             additon.remove(name);
         } else {
-            removal.put(name, hash);
+            removal.add(name);
             restrictedDelete(name);
         }
     }
@@ -61,7 +63,7 @@ public class StagingArea implements Serializable {
         return readObject(inFile, StagingArea.class);
     }
 
-    public void clear(){
+    public void clear() {
         additon.clear();
         removal.clear();
     }

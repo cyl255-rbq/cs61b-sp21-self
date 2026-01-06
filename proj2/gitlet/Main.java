@@ -30,7 +30,7 @@ public class Main {
                 add(args[1]);
                 break;
             case "commit":
-                validateArgs(args, 2);
+                validateCommitArgs(args);
                 commit(args[1]);
                 break;
             case "rm":
@@ -90,18 +90,20 @@ public class Main {
         }
     }
 
+    private static void validateCommitArgs(String[] args) {
+        if (args.length != 2 || args[1].isEmpty()) {
+            message("Please enter a commit message.");
+            System.exit(0);
+        }
+    }
+
     /**
      * @param args arguments.
      * @param n nums of the operator should follow.
      */
-
     private static void validateArgs(String[] args, int n) {
         if (args.length != n) {
-            if (args[0].equals("commit")) {
-                message("Please enter a commit message.");
-            } else {
-                message("Incorrect operands.");
-            }
+            message("Incorrect operands.");
             System.exit(0);
         }
     }
