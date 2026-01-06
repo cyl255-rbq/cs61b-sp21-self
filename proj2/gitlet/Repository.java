@@ -355,21 +355,23 @@ public class Repository implements Serializable {
 
     private static Set<String> helpBuildSet() {
         Set<String> parents = new HashSet<>();
-        File nowFile = Commit.findFile(getHeadHash());
-        Commit now = Commit.fromFile(getHeadHash());
-        String nowParent = now.getParent();
-        while (true) {
-            parents.add(nowFile.getName());
-            String anotherParent = now.getAnotherParent();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(getHeadHash());
+        while (!queue.isEmpty()) {
+            String currentHash = queue.remove();
+            if (parents.contains(currentHash)) {
+                continue;
+            }
+            parents.add(currentHash);
+            Commit current = Commit.fromFile(currentHash);
+            String parent = current.getParent();
+            if (parent != null) {
+                queue.add(parent);
+            }
+            String anotherParent = current.getAnotherParent();
             if (anotherParent != null) {
-                parents.add(anotherParent);
+                queue.add(anotherParent);
             }
-            if (nowParent == null) {
-                break;
-            }
-            nowFile = Commit.findFile(nowParent);
-            now = Commit.fromFile(nowParent);
-            nowParent = now.getParent();
         }
         return parents;
     }
