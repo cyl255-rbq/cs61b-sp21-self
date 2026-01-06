@@ -511,8 +511,27 @@ public class Repository implements Serializable {
     }
 
     private static void helpConflictContent(String file, String curContent, String branchContent) {
-        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + curContent
-                + "=======\n" + branchContent + ">>>>>>>\n");
+        String content = "<<<<<<< HEAD\n";
+
+        // 1. 处理当前分支
+        content += curContent;
+        // 如果内容存在且最后没有回车，才补回车。防止 "挤在一起" 或 "双倍回车"
+        if (!curContent.isEmpty() && !curContent.endsWith("\n")) {
+            content += "\n";
+        }
+
+        content += "=======\n";
+
+        // 2. 处理目标分支
+        content += branchContent;
+        // 同上，特别是针对 branchContent 为空的情况，这里不会加回车，完美符合 Test 35
+        if (!branchContent.isEmpty() && !branchContent.endsWith("\n")) {
+            content += "\n";
+        }
+
+        content += ">>>>>>>\n";
+
+        writeContents(join(CWD, file), content);
     }
 
     private static boolean isSame(String a, String b) {
