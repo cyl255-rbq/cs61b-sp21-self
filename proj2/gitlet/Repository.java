@@ -65,7 +65,7 @@ public class Repository implements Serializable {
     }
 
     private static void commit(String message, String parent, String anotherParent) {
-        Commit commit = new Commit(message, parent, null);
+        Commit commit = new Commit(message, parent, anotherParent);
         if (parent == null) {
             commit.saveCommit();
             return;
