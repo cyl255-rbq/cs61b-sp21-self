@@ -297,8 +297,9 @@ public class Repository implements Serializable {
         for (String fileName : plainFilenamesIn(CWD)) {
             boolean inTarget = blobs.containsKey(fileName);
             if (inTarget && untracked(fileName)) {
-                String error = "There is an untracked file in the way; delete it, or add and commit it first.";
-                message(error);
+                String error1 = "There is an untracked file in the way;";
+                String error2 = " delete it, or add and commit it first.";
+                message(error1 + error2);
                 System.exit(0);
             }
         }
@@ -425,7 +426,7 @@ public class Repository implements Serializable {
         Map<String, String> currentMap = current.commitMap();
         Map<String, String> branchMap = branch.commitMap();
         Map<String, String> splitMap = split.commitMap();
-        helpCheckMerge(currentMap, branchMap, splitMap);
+        helpCheckMerge(branchMap, splitMap);
         if (branchHash.equals(splitHash)) {
             message("Given branch is an ancestor of the current branch.");
             return;
@@ -493,7 +494,9 @@ public class Repository implements Serializable {
         }
     }
 
-    private static void helpCheckMerge(Map<String, String> currentMap, Map<String, String> branchMap, Map<String, String> splitMap) {
+    private static void helpCheckMerge(Map<String, String> branchMap, Map<String, String> splitMap) {
+        Commit current = Commit.fromFile(getHeadHash());
+        Map<String, String> currentMap = current.commitMap();
         for (String fileName : plainFilenamesIn(CWD)) {
             String splitHash = splitMap.get(fileName);
             String currentHash = currentMap.get(fileName);
@@ -502,8 +505,9 @@ public class Repository implements Serializable {
             boolean distinctFromCurrent = !isSame(branchHash, currentHash);
             boolean total = givenChanged && distinctFromCurrent;
             if (total && untracked(fileName)) {
-                String error = "There is an untracked file in the way; delete it, or add and commit it first.";
-                message(error);
+                String error1 = "There is an untracked file in the way;";
+                String error2 = " delete it, or add and commit it first.";
+                message(error1 + error2);
                 System.exit(0);
             }
         }
