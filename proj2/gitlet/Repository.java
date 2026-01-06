@@ -9,10 +9,7 @@ import java.util.Map;
 import static gitlet.Utils.*;
 import static gitlet.Utils.plainFilenamesIn;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author cyl
@@ -35,7 +32,7 @@ public class Repository implements Serializable {
     public static final File commits = join(GITLET_DIR, "objects", "commits");
     public static final File blobs = join(GITLET_DIR, "objects", "blobs");
 
-    /* TODO: fill in the rest of this class. */
+
 
     private static String getHeadName() {
         return readContentsAsString(HEAD).substring(16).trim();
@@ -59,15 +56,15 @@ public class Repository implements Serializable {
         commits.mkdirs();
         blobs.mkdir();
         writeContents(HEAD, "ref: refs/heads/master\n");
-        commit("initial commit", null); //commit ↓
+        commit("initial commit", null, null);
     }
 
     public static void commit(String message) {
-        commit(message, getHeadHash());
+        commit(message, getHeadHash(), null);
     }
 
-    private static void commit(String message, String parent) {
-        Commit commit = new Commit(message, parent);
+    private static void commit(String message, String parent, String anotherParent) {
+        Commit commit = new Commit(message, parent, null);
         if (parent == null) {
             commit.saveCommit();
             return;
@@ -315,7 +312,7 @@ public class Repository implements Serializable {
             message("No need to checkout the current branch.");
             return;
         }
-        helpCheckoutBranch(readContentsAsString(join(heads, branchName)));
+        helpCheckoutBranch(getBranchHead(branchName));
         writeContents(HEAD, "ref: refs/heads/", branchName, "\n");
     }
 
@@ -347,4 +344,166 @@ public class Repository implements Serializable {
         writeContents(join(heads, getHeadName()), commitHash);
     }
 
+    private static Set<String> helpBuildSet() {
+        Set<String> parents = new HashSet<>();
+        File nowFile = Commit.findFile(getHeadHash());
+        Commit now = Commit.fromFile(getHeadHash());
+        String nowParent = now.getParent();
+        while (true) {
+            parents.add(nowFile.getName());
+            String anotherParent = now.getAnotherParent();
+            if (anotherParent != null) {
+                parents.add(anotherParent);
+            }
+            if (nowParent == null) {
+                break;
+            }
+            nowFile = Commit.findFile(nowParent);
+            now = Commit.fromFile(nowParent);
+            nowParent = now.getParent();
+        }
+        return parents;
+    }
+
+    private static String helpFindSplit(String branchName, Set<String> parents) {
+        File branchFile = Commit.findFile(getBranchHead(branchName));
+        Commit branchNow = Commit.fromFile(getHeadHash());
+        String branchParent = branchNow.getParent();
+        while (true) {
+            if (parents.contains(branchFile.getName())) {
+                return branchFile.getName();
+            }
+            String anotherParent = branchNow.getAnotherParent();
+            if (anotherParent != null) {
+                return anotherParent;
+            }
+            if (branchParent == null) {
+                return null;
+            }
+            branchFile = Commit.findFile(branchParent);
+            branchNow = Commit.fromFile(branchParent);
+            branchParent = branchNow.getParent();
+        }
+    }
+
+    public static void merge(String branchName) {
+        StagingArea stagingArea = StagingArea.fromFile();
+        if (!stagingArea.addition().isEmpty() || !stagingArea.removal().isEmpty()) {
+            message("You have uncommitted changes.");
+            return;
+        }
+        File target = join(heads, branchName);
+        if (!target.exists()) {
+            message("A branch with that name does not exist.");
+            return;
+        }
+        if (branchName.equals(getHeadName())) {
+            message("Cannot merge a branch with itself.");
+            return;
+        }
+        String branchHash = getBranchHead(branchName);
+
+        Set<String> parents = helpBuildSet();
+        String splitHash = helpFindSplit(branchName, parents);
+        Commit current = Commit.fromFile(getHeadHash());
+        Commit branch = Commit.fromFile(branchHash);
+        Commit split = Commit.fromFile(splitHash);
+        Map<String, String> currentMap = current.commitMap();
+        Map<String, String> branchMap = branch.commitMap();
+        Map<String, String> splitMap = split.commitMap();
+        helpCheckMerge(currentMap, branchMap, splitMap);
+        if (branchHash.equals(splitHash)) {
+            message("Given branch is an ancestor of the current branch.");
+            return;
+        }
+        if (getHeadHash().equals(splitHash)) {
+            checkoutBranch(branchName);
+            message("Current branch fast-forwarded.");
+            return;
+        }
+        boolean conflict = false;
+        Set<String> currentSet = currentMap.keySet();
+        Set<String> branchSet = branchMap.keySet();
+        Set<String> splitSet = splitMap.keySet();
+        for (String file : branchSet) {
+            if (!splitSet.contains(file)) {
+                if (!currentSet.contains(file)) {
+                    checkoutFile(branchHash, file);
+                    add(file);
+                } else if (!currentMap.get(file).equals(branchMap.get(file))) {
+                    helpConflictContent(file, readContentsAsString(join(blobs, currentMap.get(file))),
+                            readContentsAsString(join(blobs, branchMap.get(file))));
+                    conflict = true;
+                    add(file);
+                }
+            }
+        }
+        for (String file : splitSet) {
+            String splitFileHash = splitMap.get(file);
+            String currentFileHash = currentMap.get(file);
+            String branchFileHash = branchMap.get(file);
+            if (splitFileHash.equals(currentFileHash)) {
+                if (!branchSet.contains(file)) {
+                    rm(file);
+                } else if (!splitFileHash.equals(branchFileHash)) {
+                    checkoutFile(branchHash, file);
+                    add(file);
+                }
+            } else if (!splitFileHash.equals(branchFileHash)) {
+                if (branchFileHash!=null) {
+                    if (currentFileHash == null) {
+                        helpConflictContent(file, "",
+                                readContentsAsString(join(blobs, branchFileHash)));
+                        conflict = true;
+                        add(file);
+                    } else if (!branchFileHash.equals(currentFileHash)) {
+                        helpConflictContent(file, readContentsAsString(join(blobs, currentFileHash)),
+                                readContentsAsString(join(blobs, branchFileHash)));
+                        conflict = true;
+                        add(file);
+                    }
+                } else if (currentFileHash != null) {
+                    helpConflictContent(file, readContentsAsString(join(blobs, currentFileHash)),
+                            "");
+                    conflict = true;
+                    add(file);
+                }
+
+            }
+        }
+        commit("Merged " + getHeadName() + " into " + branchName + ".", getHeadHash(), branchHash);
+        if (conflict) {
+            message("Encountered a merge conflict.");
+        }
+    }
+
+    private static void helpCheckMerge(Map<String, String> currentMap, Map<String, String> branchMap, Map<String, String> splitMap) {
+        for (String fileName : plainFilenamesIn(CWD)) {
+            String splitHash = splitMap.get(fileName);
+            String currentHash = currentMap.get(fileName);
+            String branchHash = branchMap.get(fileName);
+            boolean givenChanged = !isSame(splitHash, branchHash);
+            boolean distinctFromCurrent = !isSame(branchHash, currentHash);
+            boolean total = givenChanged && distinctFromCurrent;
+            if (total && untracked(fileName)) {
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+    }
+
+    private static void helpConflictContent(String file, String currentReadAsStringContent, String branchReadAsStringContent) {
+        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + currentReadAsStringContent
+                + "=======\n" + branchReadAsStringContent + ">>>>>>>\n");
+    }
+
+    private static boolean isSame(String a, String b) {
+        if (a == null && b == null) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.equals(b);
+    }
 }

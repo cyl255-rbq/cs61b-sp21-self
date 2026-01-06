@@ -1,0 +1,45 @@
+第一步：穷举（你已经做到的）
+我们把三个变量（Split, Current, Branch）的所有排列组合列出来，然后问自己：Gitlet 会动硬盘吗？
+假设文件内容可以用字母 A, B, C 代表版本。
+场景	Split (祖先)	Current (我)	Branch (它)	规则 (Rule)	动作 (Action)
+1		A			A			A			-		💤 睡觉
+2		A			B (我改)		A			Rule 2	💤 睡觉 (保留我的)
+3		A			B (我改)		B (它改)		Rule 3	💤 睡觉 (大家都一样)
+4		A			A			B (它改)		Rule 1	💥 动手! (覆盖)
+5		A			B (我改)		C (冲突)		Conflict	💥 动手! (写冲突)
+6		Null			Null			A (新)		Rule 5	💥 动手! (新建)
+7		A			Null (删)		A			Rule 7	💤 睡觉 (保持删除)
+
+看到这张表，你的大脑是不是一片混乱？这就对了。这时候看代码就是一大堆 if-else。
+第二步：找“红圈”的共同点（归纳法）
+现在，我们只盯着上面标了 💥 动手 的那三行（行 4、5、6）。我们来找找它们的共同特征：
+特征 1：看 Branch 和 Split 的关系
+    行 4: Split(A) vs Branch(B) -> 不一样
+    行 5: Split(A) vs Branch(C) -> 不一样
+    行 6: Split(Null) vs Branch(A) -> 不一样
+    初步结论：只要动手，Branch 肯定变了 (Branch != Split)。
+        反证：你看行 1, 2, 7，Branch 都没变，结果都是睡觉。
+特征 2：看 Branch 和 Current 的关系
+    行 4: Branch(B) vs Current(A) -> 不一样
+    行 5: Branch(C) vs Current(B) -> 不一样
+    行 6: Branch(A) vs Current(Null) -> 不一样
+    初步结论：只要动手，Branch 和 Current 肯定不一样 (Branch != Current)。
+        反证：你看行 3，虽然 Branch 变了，但 Current 和它一样，结果还是睡觉。
+第三步：合体（简化版诞生）
+把上面两个共同特征用 && 连起来：
+    必须 (Branch != Split) 且 (Branch != Current) 才能触发 💥 动手。
+这就得出了那个代码：
+Java
+if (!isSame(branch, split) && !isSame(branch, current)) {
+    报错();
+}
+你可以想象一个维恩图（Venn Diagram）：
+    左边的圆：所有 Branch 发生变化 的文件 (Branch != Split)。
+    右边的圆：所有 Branch 和 Current 不一样 的文件 (Branch != Current)。
+    中间的交集：就是Gitlet 会覆盖文件的区域（危险区）。
+    我们检查 Untracked 文件，只需要盯着这个交集看。
+
+下次遇到这种多条件判断，不要空想，拿起纸和笔：
+    画表格：把所有情况列出来（就像上面的真值表）。
+    标结果：每一行是 True (要处理) 还是 False (不管)。
+    找规律：只看那些 True 的行，找它们共有的变量特征。

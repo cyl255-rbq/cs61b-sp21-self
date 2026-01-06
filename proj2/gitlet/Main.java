@@ -70,6 +70,8 @@ public class Main {
                 reset(args[1]);
                 break;
             case "merge":
+                validateArgs(args, 2);
+                merge(args[1]);
                 break;
             default:
                 message("No command with that name exists.");

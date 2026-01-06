@@ -10,15 +10,12 @@ import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author cyl
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
@@ -30,11 +27,11 @@ public class Commit implements Serializable {
     private String parent;
     private String anotherParent;
     private Date timestamp;
-    /* TODO: fill in the rest of this class. */
 
-    public Commit(String message, String parent){
+    public Commit(String message, String parent, String anotherParent){
         this.message = message;
         this.parent = parent;
+        this.anotherParent = anotherParent;
         if (this.parent == null) {
             timestamp = new Date(0);
         } else {
@@ -70,12 +67,12 @@ public class Commit implements Serializable {
         return join(GITLET_DIR, "objects", "commits", hash);
     }
 
-    public static Commit fromFile(String name) {
-        return readObject(findFile(name), Commit.class);
+    public static Commit fromFile(String hash) {
+        return readObject(findFile(hash), Commit.class);
     }
 
     public String saveCommit() {
-        String hash = sha1(serialize(this));
+        String hash = sha1((Object) serialize(this));
         File outFile = join(GITLET_DIR, "objects", "commits", hash);
         File master = join(GITLET_DIR, "refs", "heads", "master");
         writeContents(master, hash);
