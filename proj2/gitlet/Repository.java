@@ -57,6 +57,7 @@ public class Repository implements Serializable {
         BLOBS.mkdir();
         writeContents(HEAD, "ref: refs/heads/master\n");
         commit("initial commit", null, null);
+        new StagingArea().saveStagingArea();
     }
 
     public static void commit(String message) {
@@ -95,12 +96,8 @@ public class Repository implements Serializable {
             message("File does not exist.");
             return;
         }
-        File index = join(GITLET_DIR, "index");
         Blob tempBlob = new Blob(temp);
         String tempBlobHash = tempBlob.getHash();
-        if (!index.exists()) {
-            new StagingArea().saveStagingArea();
-        }
         StagingArea stagingArea = StagingArea.fromFile();
         Commit now = Commit.fromFile(getHeadHash());
         if (now.mapContains(name) && now.mapGetValue(name).equals(tempBlobHash)) {
@@ -184,10 +181,6 @@ public class Repository implements Serializable {
     }
 
     public static void status() {
-        File index = join(GITLET_DIR, "index");
-        if (!index.exists()) {
-            new StagingArea().saveStagingArea();
-        }
         message("=== Branches ===");
         String head = readContentsAsString(HEAD).substring(16).trim();
         for (String eachName : plainFilenamesIn(HEADS)) {
@@ -318,6 +311,7 @@ public class Repository implements Serializable {
     }
 
     public static void checkoutBranch(String branchName) {
+
         File branch = join(HEADS, branchName);
         if (!branch.exists()) {
             message("No such branch exists.");
@@ -401,23 +395,26 @@ public class Repository implements Serializable {
         }
     }
 
-    public static void merge(String branchName) {
+    private static void checkMergeFirst(String branchName) {
         StagingArea stagingArea = StagingArea.fromFile();
         if (!stagingArea.addition().isEmpty() || !stagingArea.removal().isEmpty()) {
             message("You have uncommitted changes.");
-            return;
+            System.exit(0);
         }
         File target = join(HEADS, branchName);
         if (!target.exists()) {
             message("A branch with that name does not exist.");
-            return;
+            System.exit(0);
         }
         if (branchName.equals(getHeadName())) {
             message("Cannot merge a branch with itself.");
-            return;
+            System.exit(0);
         }
-        String branchHash = getBranchHead(branchName);
+    }
 
+    public static void merge(String branchName) {
+        checkMergeFirst(branchName);
+        String branchHash = getBranchHead(branchName);
         Set<String> parents = helpBuildSet();
         String splitHash = helpFindSplit(branchName, parents);
         Commit current = Commit.fromFile(getHeadHash());
@@ -442,13 +439,13 @@ public class Repository implements Serializable {
         Set<String> splitSet = splitMap.keySet();
         for (String file : branchSet) {
             if (!splitSet.contains(file)) {
-                String currentContent = readContentsAsString(join(BLOBS, currentMap.get(file)));
+                File currentContent = join(BLOBS, currentMap.get(file));
                 String branchContent = readContentsAsString(join(BLOBS, branchMap.get(file)));
                 if (!currentSet.contains(file)) {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    helpConflictContent(file, currentContent, branchContent);
+                    helpConflictContent(file, readContentsAsString(currentContent), branchContent);
                     conflict = true;
                     add(file);
                 }
@@ -494,13 +491,13 @@ public class Repository implements Serializable {
         }
     }
 
-    private static void helpCheckMerge(Map<String, String> branchMap, Map<String, String> splitMap) {
+    private static void helpCheckMerge(Map<String, String> branch, Map<String, String> split) {
         Commit current = Commit.fromFile(getHeadHash());
         Map<String, String> currentMap = current.commitMap();
         for (String fileName : plainFilenamesIn(CWD)) {
-            String splitHash = splitMap.get(fileName);
+            String splitHash = split.get(fileName);
             String currentHash = currentMap.get(fileName);
-            String branchHash = branchMap.get(fileName);
+            String branchHash = branch.get(fileName);
             boolean givenChanged = !isSame(splitHash, branchHash);
             boolean distinctFromCurrent = !isSame(branchHash, currentHash);
             boolean total = givenChanged && distinctFromCurrent;
