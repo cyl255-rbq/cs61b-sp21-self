@@ -443,8 +443,10 @@ public class Repository implements Serializable {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    String currentContent = readContentsAsString(join(BLOBS, currentMap.get(file)));
-                    String branchContent = readContentsAsString(join(BLOBS, branchMap.get(file)));
+                    Blob currentBlob = readObject(join(BLOBS, currentMap.get(file)), Blob.class);
+                    Blob branchBlob = readObject(join(BLOBS, branchMap.get(file)), Blob.class);
+                    String currentContent = currentBlob.getBlobAsText();
+                    String branchContent = branchBlob.getBlobAsText();
                     helpConflictContent(file, currentContent, branchContent);
                     conflict = true;
                     add(file);
@@ -465,20 +467,24 @@ public class Repository implements Serializable {
             } else if (!splitFileHash.equals(branchFileHash)) {
                 if (branchFileHash != null) {
                     if (currentFileHash == null) {
-                        helpConflictContent(file, "",
-                                readContentsAsString(join(BLOBS, branchFileHash)));
+                        Blob branchBlob = readObject(join(BLOBS, branchFileHash), Blob.class);
+                        String branchContent = branchBlob.getBlobAsText();
+                        helpConflictContent(file, "", branchContent);
                         conflict = true;
                         add(file);
                     } else if (!branchFileHash.equals(currentFileHash)) {
-                        String currentString = readContentsAsString(join(BLOBS, currentFileHash));
-                        String branchString = readContentsAsString(join(BLOBS, branchFileHash));
-                        helpConflictContent(file, currentString, branchString);
+                        Blob currentBlob = readObject(join(BLOBS, currentFileHash), Blob.class);
+                        Blob branchBlob = readObject(join(BLOBS, branchFileHash), Blob.class);
+                        String currentContent = currentBlob.getBlobAsText();
+                        String branchContent = branchBlob.getBlobAsText();
+                        helpConflictContent(file, currentContent, branchContent);
                         conflict = true;
                         add(file);
                     }
                 } else if (currentFileHash != null) {
-                    helpConflictContent(file, readContentsAsString(join(BLOBS, currentFileHash)),
-                            "");
+                    Blob currentBlob = readObject(join(BLOBS, currentFileHash), Blob.class);
+                    String currentContent = currentBlob.getBlobAsText();
+                    helpConflictContent(file, readContentsAsString(join(BLOBS, currentContent)), "");
                     conflict = true;
                     add(file);
                 }
@@ -511,28 +517,8 @@ public class Repository implements Serializable {
     }
 
     private static void helpConflictContent(String file, String curContent, String branchContent) {
-        // 1. 遵从 Spec: "Treat a deleted file in a branch as an empty file."
-        if (curContent == null) {
-            curContent = "";
-        }
-        if (branchContent == null) {
-            branchContent = "";
-        }
-
-        // 2. 唯一需要的额外操作：清洗 Windows 的 \r
-        // 这不是为了改变逻辑，只是为了让你的 Windows 电脑跑出 Linux 的结果
-        curContent = curContent.replace("\r", "");
-        branchContent = branchContent.replace("\r", "");
-
-        // 3. 遵从 Spec: "Use straight concatenation here."
-        // 不加 \n，不减 \n，原样拼接
-        String content = "<<<<<<< HEAD\n" +
-                curContent +
-                "=======\n" +
-                branchContent +
-                ">>>>>>>\n";
-
-        writeContents(join(CWD, file), content);
+        writeContents(join(CWD, file), "<<<<<<< HEAD\n" + curContent
+                + "=======\n" + branchContent + ">>>>>>>");
     }
 
     private static boolean isSame(String a, String b) {
