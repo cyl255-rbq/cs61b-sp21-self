@@ -443,10 +443,8 @@ public class Repository implements Serializable {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    Blob currentBlob = readObject(join(BLOBS, currentMap.get(file)), Blob.class);
-                    Blob branchBlob = readObject(join(BLOBS, branchMap.get(file)), Blob.class);
-                    String currentContent = currentBlob.getBlobAsText();
-                    String branchContent = branchBlob.getBlobAsText();
+                    String currentContent = readObject(join(BLOBS, currentMap.get(file)), Blob.class).getBlobAsText();
+                    String branchContent = readObject(join(BLOBS, branchMap.get(file)), Blob.class).getBlobAsText();
                     helpConflictContent(file, currentContent, branchContent);
                     conflict = true;
                     add(file);
@@ -484,7 +482,7 @@ public class Repository implements Serializable {
                 } else if (currentFileHash != null) {
                     Blob currentBlob = readObject(join(BLOBS, currentFileHash), Blob.class);
                     String currentContent = currentBlob.getBlobAsText();
-                    helpConflictContent(file, readContentsAsString(join(BLOBS, currentContent)), "");
+                    helpConflictContent(file, currentContent, "");
                     conflict = true;
                     add(file);
                 }
@@ -518,7 +516,7 @@ public class Repository implements Serializable {
 
     private static void helpConflictContent(String file, String curContent, String branchContent) {
         writeContents(join(CWD, file), "<<<<<<< HEAD\n" + curContent
-                + "=======\n" + branchContent + ">>>>>>>");
+                + "=======\n" + branchContent + ">>>>>>>\n");
     }
 
     private static boolean isSame(String a, String b) {
