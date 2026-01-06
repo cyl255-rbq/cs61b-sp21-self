@@ -485,7 +485,7 @@ public class Repository implements Serializable {
 
             }
         }
-        commit("Merged " + getHeadName() + " into " + branchName + ".", getHeadHash(), branchHash);
+        commit("Merged " + branchName + " into " + getHeadName() + ".", getHeadHash(), branchHash);
         if (conflict) {
             message("Encountered a merge conflict.");
         }
