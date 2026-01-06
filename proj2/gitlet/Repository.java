@@ -412,6 +412,10 @@ public class Repository implements Serializable {
         }
     }
 
+    private static String getBlobContent(File blob) {
+        return readObject(blob, Blob.class).getBlobAsText();
+    }
+
     public static void merge(String branchName) {
         checkMergeFirst(branchName);
         String branchHash = getBranchHead(branchName);
@@ -443,8 +447,8 @@ public class Repository implements Serializable {
                     checkoutFile(branchHash, file);
                     add(file);
                 } else if (!currentMap.get(file).equals(branchMap.get(file))) {
-                    String currentContent = readObject(join(BLOBS, currentMap.get(file)), Blob.class).getBlobAsText();
-                    String branchContent = readObject(join(BLOBS, branchMap.get(file)), Blob.class).getBlobAsText();
+                    String currentContent = getBlobContent(join(BLOBS, currentMap.get(file)));
+                    String branchContent = getBlobContent(join(BLOBS, branchMap.get(file)));
                     helpConflictContent(file, currentContent, branchContent);
                     conflict = true;
                     add(file);
@@ -465,23 +469,19 @@ public class Repository implements Serializable {
             } else if (!splitFileHash.equals(branchFileHash)) {
                 if (branchFileHash != null) {
                     if (currentFileHash == null) {
-                        Blob branchBlob = readObject(join(BLOBS, branchFileHash), Blob.class);
-                        String branchContent = branchBlob.getBlobAsText();
+                        String branchContent = getBlobContent(join(BLOBS, branchFileHash));
                         helpConflictContent(file, "", branchContent);
                         conflict = true;
                         add(file);
                     } else if (!branchFileHash.equals(currentFileHash)) {
-                        Blob currentBlob = readObject(join(BLOBS, currentFileHash), Blob.class);
-                        Blob branchBlob = readObject(join(BLOBS, branchFileHash), Blob.class);
-                        String currentContent = currentBlob.getBlobAsText();
-                        String branchContent = branchBlob.getBlobAsText();
+                        String currentContent =  getBlobContent(join(BLOBS, currentFileHash));
+                        String branchContent = getBlobContent(join(BLOBS, branchFileHash));
                         helpConflictContent(file, currentContent, branchContent);
                         conflict = true;
                         add(file);
                     }
                 } else if (currentFileHash != null) {
-                    Blob currentBlob = readObject(join(BLOBS, currentFileHash), Blob.class);
-                    String currentContent = currentBlob.getBlobAsText();
+                    String currentContent = getBlobContent(join(BLOBS, currentFileHash));
                     helpConflictContent(file, currentContent, "");
                     conflict = true;
                     add(file);
