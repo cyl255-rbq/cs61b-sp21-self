@@ -254,9 +254,26 @@ public class Repository implements Serializable {
         }
     }
 
+    private static File shortFind(String hash) {
+        int length = hash.length();
+        if (length == 40) {
+            return Commit.findFile(hash);
+        }
+        List<String> fit = new ArrayList<>();
+        for (String file : plainFilenamesIn(COMMITS)) {
+            if (file.substring(0, length).equals(hash)) {
+                fit.add(file);
+            }
+        }
+        if (fit.size() != 1) {
+            return null;
+        }
+        return join(GITLET_DIR, "objects", "commits", fit.getFirst());
+    }
+
     private static void helpCheckoutExist(String hash) {
-        File checkoutFile = Commit.findFile(hash);
-        if (!checkoutFile.exists()) {
+        File checkoutFile = shortFind(hash);
+        if (checkoutFile == null || !checkoutFile.exists()) {
             message("No commit with that id exists.");
             System.exit(0);
         }
