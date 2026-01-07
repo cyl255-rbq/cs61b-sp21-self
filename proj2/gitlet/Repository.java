@@ -355,6 +355,30 @@ public class Repository implements Serializable {
 
     private static Set<String> helpBuildSet() {
         Set<String> parents = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(getHeadHash());
+        while (!queue.isEmpty()) {
+            String currentHash = queue.remove();
+            if (parents.contains(currentHash)) {
+                continue;
+            }
+            parents.add(currentHash);
+            Commit current = Commit.fromFile(currentHash);
+            String parent = current.getParent();
+            if (parent != null) {
+                queue.add(parent);
+            }
+            String anotherParent = current.getAnotherParent();
+            if (anotherParent != null) {
+                queue.add(anotherParent);
+            }
+        }
+        return parents;
+    }
+
+    /**
+     private static Set<String> helpBuildSet() {
+        Set<String> parents = new HashSet<>();
         File nowFile = Commit.findFile(getHeadHash());
         Commit now = Commit.fromFile(getHeadHash());
         String nowParent = now.getParent();
@@ -372,27 +396,33 @@ public class Repository implements Serializable {
             nowParent = now.getParent();
         }
         return parents;
-    }
+     }
+     */
 
     private static String helpFindSplit(String branchName, Set<String> parents) {
-        File branchFile = Commit.findFile(getBranchHead(branchName));
-        Commit branchNow = Commit.fromFile(getHeadHash());
-        String branchParent = branchNow.getParent();
-        while (true) {
-            if (parents.contains(branchFile.getName())) {
-                return branchFile.getName();
+        Queue<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(getBranchHead(branchName));
+        while (!queue.isEmpty()) {
+            String branchHash = queue.remove();
+            if (visited.contains( branchHash)) {
+                continue;
             }
-            String anotherParent = branchNow.getAnotherParent();
+            if (parents.contains(branchHash)) {
+                return branchHash;
+            }
+            Commit branch = Commit.fromFile(branchHash);
+            String parent = branch.getParent();
+            if (parent != null) {
+                queue.add(parent);
+            }
+            String anotherParent = branch.getAnotherParent();
             if (anotherParent != null) {
-                return anotherParent;
+                queue.add(anotherParent);
             }
-            if (branchParent == null) {
-                return null;
-            }
-            branchFile = Commit.findFile(branchParent);
-            branchNow = Commit.fromFile(branchParent);
-            branchParent = branchNow.getParent();
+            visited.add(branchHash);
         }
+        return null;
     }
 
     private static void checkMergeFirst(String branchName) {
@@ -433,7 +463,11 @@ public class Repository implements Serializable {
             return;
         }
         if (getHeadHash().equals(splitHash)) {
+            String headName = getHeadName();
+            File head = join(HEADS, headName);
             checkoutBranch(branchName);
+            writeContents(head, branchHash);
+            writeContents(HEAD, "ref: refs/heads/", headName, "\n");
             message("Current branch fast-forwarded.");
             return;
         }
