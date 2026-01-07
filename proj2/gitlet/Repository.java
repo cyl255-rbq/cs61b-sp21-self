@@ -281,6 +281,7 @@ public class Repository implements Serializable {
 
     public static void checkoutFile(String hash, String name) {
         helpCheckoutExist(hash);
+        hash = shortFind(hash).getName();
         String checkoutBlobHash = Commit.fromFile(hash).commitMap().get(name);
         if (checkoutBlobHash == null) {
             message("File does not exist in that commit.");

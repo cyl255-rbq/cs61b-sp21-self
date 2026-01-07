@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 import static gitlet.Repository.BLOBS;
-import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
 
 public class Blob implements Serializable {
