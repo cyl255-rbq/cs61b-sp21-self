@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
+import static gitlet.Repository.BLOBS;
 import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
 
@@ -20,7 +21,7 @@ public class Blob implements Serializable {
     }
 
     public static Blob fromFile(String name) {
-        File inFile = join(GITLET_DIR, "objects", "blobs", name);
+        File inFile = join(BLOBS, name);
         return readObject(inFile, Blob.class);
     }
 
@@ -37,7 +38,7 @@ public class Blob implements Serializable {
     }
 
     String saveBlob() {
-        File outFile = join(GITLET_DIR, "objects", "blobs", this.hash);
+        File outFile = join(BLOBS, this.hash);
         if (!outFile.exists()) {
             writeObject(outFile, this);
         }

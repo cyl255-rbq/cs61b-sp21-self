@@ -261,14 +261,14 @@ public class Repository implements Serializable {
         }
         List<String> fit = new ArrayList<>();
         for (String file : plainFilenamesIn(COMMITS)) {
-            if (file.substring(0, length).equals(hash)) {
+            if (file.startsWith(hash)) {
                 fit.add(file);
             }
         }
         if (fit.size() != 1) {
             return null;
         }
-        return join(GITLET_DIR, "objects", "commits", fit.getFirst());
+        return join(COMMITS, fit.getFirst());
     }
 
     private static void helpCheckoutExist(String hash) {
