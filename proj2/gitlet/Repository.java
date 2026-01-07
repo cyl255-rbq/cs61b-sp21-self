@@ -405,7 +405,7 @@ public class Repository implements Serializable {
         queue.add(getBranchHead(branchName));
         while (!queue.isEmpty()) {
             String branchHash = queue.remove();
-            if (visited.contains( branchHash)) {
+            if (visited.contains(branchHash)) {
                 continue;
             }
             if (parents.contains(branchHash)) {
@@ -446,6 +446,16 @@ public class Repository implements Serializable {
         return readObject(blob, Blob.class).getBlobAsText();
     }
 
+
+    private static void helpFastCheckout(String branchName) {
+        String branchHash = getBranchHead(branchName);
+        String headName = getHeadName();
+        File head = join(HEADS, headName);
+        checkoutBranch(branchName);
+        writeContents(head, branchHash);
+        writeContents(HEAD, "ref: refs/heads/", headName, "\n");
+    }
+
     public static void merge(String branchName) {
         checkMergeFirst(branchName);
         String branchHash = getBranchHead(branchName);
@@ -463,11 +473,7 @@ public class Repository implements Serializable {
             return;
         }
         if (getHeadHash().equals(splitHash)) {
-            String headName = getHeadName();
-            File head = join(HEADS, headName);
-            checkoutBranch(branchName);
-            writeContents(head, branchHash);
-            writeContents(HEAD, "ref: refs/heads/", headName, "\n");
+            helpFastCheckout(branchName);
             message("Current branch fast-forwarded.");
             return;
         }
