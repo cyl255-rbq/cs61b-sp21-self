@@ -268,7 +268,7 @@ public class Repository implements Serializable {
         if (fit.size() != 1) {
             return null;
         }
-        return join(COMMITS, fit.getFirst());
+        return join(COMMITS, fit.get(0));
     }
 
     private static void helpCheckoutExist(String hash) {
