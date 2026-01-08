@@ -73,6 +73,18 @@ public class Main {
                 validateArgs(args, 2);
                 merge(args[1]);
                 break;
+            case "add-remote":
+                validateArgs(args, 3);
+                addRemote(args);
+                break;
+            case "rm-remote":
+                validateArgs(args, 2);
+                rmRemote(args[1]);
+                break;
+            case "push":
+                validateArgs(args, 3);
+                push();
+                break;
             default:
                 message("No command with that name exists.");
                 System.exit(0);

@@ -31,7 +31,7 @@ public class Repository implements Serializable {
     public static final File HEAD = join(GITLET_DIR, "HEAD");
     public static final File COMMITS = join(GITLET_DIR, "objects", "commits");
     public static final File BLOBS = join(GITLET_DIR, "objects", "blobs");
-
+    public static final File REMOTES = join(GITLET_DIR, "remotes");
 
 
     private static String getHeadName() {
@@ -55,6 +55,8 @@ public class Repository implements Serializable {
         HEADS.mkdirs();
         COMMITS.mkdirs();
         BLOBS.mkdir();
+        HashMap<String, String> remotes = new HashMap<>();
+        writeObject(REMOTES, remotes);
         writeContents(HEAD, "ref: refs/heads/master\n");
         commit("initial commit", null, null);
         new StagingArea().saveStagingArea();
@@ -586,4 +588,29 @@ public class Repository implements Serializable {
         }
         return a.equals(b);
     }
+
+    public static void addRemote(String[] args) {
+        HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
+        if (remotes.containsKey(args[1])) {
+            message("A remote with that name already exists.");
+            return;
+        }
+        remotes.put(args[1], args[2]);
+        writeObject(REMOTES, remotes);
+    }
+
+    public static void rmRemote(String remoteName) {
+        HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
+        if (!remotes.containsKey(remoteName)) {
+            message("A remote with that name does not exist.");
+            return;
+        }
+        remotes.remove(remoteName);
+        writeObject(REMOTES, remotes);
+    }
+
+    public static void push() {
+
+    }
+
 }
