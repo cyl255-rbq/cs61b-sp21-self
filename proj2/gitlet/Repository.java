@@ -589,7 +589,18 @@ public class Repository implements Serializable {
         return a.equals(b);
     }
 
+    /**
+     readObject 的局限： 你传给 readObject 的参数是 HashMap.class。注意，Java 里没有 HashMap<String, String>.class 这种东西。
+     Java 运行的时候，所有的 <String, String> 都会被擦除，只剩下一个光秃秃的 HashMap。
+     返回结果： 所以 readObject 返回的是一个原始类型（Raw Type） 的 HashMap（里面什么都能装）。
+     赋值冲突： 你试图把这个“什么都能装的 HashMap” 赋值给你定义的“只能装 String 的 HashMap<String, String>”。
+     编译器的担忧： 编译器觉得这不安全（Unchecked），所以它报了 [unchecked] 警告
+     既然你知道自己在做什么，你可以用 @SuppressWarnings("unchecked") 注解告诉编译器：“我知道这不安全，但我负责，你闭嘴。”
+     你可以把它加在包含这行代码的**方法（Method）**上面。
+     */
+
     public static void addRemote(String[] args) {
+        @SuppressWarnings("unchecked")
         HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
         if (remotes.containsKey(args[1])) {
             message("A remote with that name already exists.");
@@ -601,6 +612,7 @@ public class Repository implements Serializable {
     }
 
     public static void rmRemote(String remoteName) {
+        @SuppressWarnings("unchecked")
         HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
         if (!remotes.containsKey(remoteName)) {
             message("A remote with that name does not exist.");
@@ -699,6 +711,7 @@ public class Repository implements Serializable {
     }
 
     public static void push(String remoteName, String remoteBranchName) {
+        @SuppressWarnings("unchecked")
         HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
         String remotePath = remotes.get(remoteName);
         remotesPathExist(remotePath);
@@ -749,6 +762,7 @@ public class Repository implements Serializable {
     }
 
     public static void fetch(String remoteName, String remoteBranchName) {
+        @SuppressWarnings("unchecked")
         HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
         String remotePath = remotes.get(remoteName);
         remotesPathExist(remotePath);

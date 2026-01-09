@@ -1,0 +1,80 @@
+    public static void pull(String remoteName, String remoteBranchName) {
+        fetch(remoteName, remoteBranchName);
+        merge(remoteName + "/" + remoteBranchName);
+    }
+
+join用来爬路径
+    /** Return the concatentation of FIRST and OTHERS into a File designator,
+     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
+     *  method. */
+    static File join(String first, String... others) {
+        return Paths.get(first, others).toFile();
+    }
+
+    /** Return the concatentation of FIRST and OTHERS into a File designator,
+     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
+     *  method. */
+    static File join(File first, String... others) {
+        return Paths.get(first.getPath(), others).toFile();
+    }
+
+你之前所有的代码能跑通，全都是因为 join (即 Paths.get) 实际上是个“路径拼接器”，而不是简单的“文件名拼接器”。
+至于你那个很有趣的问题：“为什么我把所有输入的 String 都当成文件名（Filename）写代码，结果却都能对呢？”
+原因其实很简单，也很巧妙：因为“文件名”其实就是“长度为 1 的路径”。
+来，我给你拆解一下你的“思维模型”和“实际底层”的误会是如何完美重合的。
+1. 你的误会：以为 join 是在贴标签
+你之前的理解可能是这样的：
+    join(HEADS, "master") -> 在 HEADS 文件夹里，找一个名字叫 "master" 的纸。
+    join(HEADS, "origin/master") -> 在 HEADS 文件夹里，找一个名字叫 "origin/master" 的纸（文件名里带斜杠）。
+在你的脑海里，所有文件都是“平铺”的。
+2. 实际的底层：join 是在画地图
+实际上 join(Base, String) 做的事情是：以 Base 为起点，按照 String 里的指示继续往下走。
+情况 A：你之前的命令（比如 branch master）
+    输入："master"
+    你的理解：文件名叫 master。
+    底层操作：从 HEADS 出发，往下走一层，找到 master。
+    结果：重合了！ 因为只走一层，所以“路径”和“文件名”是一回事。
+情况 B：现在的命令（比如 merge origin/master）
+    输入："origin/master"
+    你的理解：文件名叫 origin/master（虽然怪怪的）。
+    底层操作：从 HEADS 出发，先往下走进 origin 文件夹，再往下走进 master 文件。
+    结果：又重合了！
+真相就是：Java 的 IO 系统根本不关心你给它的 String 到底是一层（文件名）还是多层（路径）。它只管拿着这个 String 往后拼。
+3. 举例：为什么其他命令也没报错？
+让我们看看你写过的其他命令，为什么把“路径”当“文件名”想，从来不出错。
+例子 1：add(String name)
+    你的代码：File temp = join(CWD, name);
+    常规用法：add hello.txt
+        join 拼出：CWD/hello.txt。没问题。
+    进阶用法（假设你支持子文件夹）：add src/Main.java
+        你的代码依然是：join(CWD, "src/Main.java")
+        join 拼出：CWD/src/Main.java。
+        依然没问题！ 即使你心里想的是“我要 add 一个叫 src/Main.java 的文件”，Java 实际做的是“去 src 目录下找 Main.java”。
+例子 2：checkoutBranch(String branchName)
+    你的代码：File branch = join(HEADS, branchName);
+    常规用法：branchName = "master"
+        路径：HEADS/master（一层）。
+    Fetch 用法：branchName = "origin/master"
+        路径：HEADS/origin/master（两层）。
+结论： 你之所以能写对，是因为你在所有的方法里，都使用了一个**“基准目录”（比如 CWD, HEADS, COMMITS）加上一个“相对路径字符串”**。
+    当那个字符串里没有 / 时，它就是文件名。
+    当那个字符串里有 / 时，它就是路径。
+    对于 join 来说，这两个是同一个东西。
+4. 什么时候你的理解会出错？
+只有一种情况，你的“文件名”理解会害了你，那就是手动字符串处理的时候。
+如果你写了这样的代码（幸好你没写）：
+Java
+// 假设你想获取分支的文件名
+String fileName = new File("origin/master").getName();
+    你的期望（按文件名理解）：拿到 "origin/master"。
+    实际结果（Java 按路径理解）：拿到 "master"（因为 origin 被当成了父目录被剥离了）。
+但因为你在 Gitlet 里：
+    基本全是把 String 扔给 join。
+    很少去解析 String 内部的结构（除了那个 addRemote 里的 replace）。
+    所以，你避开了所有的坑！
+总结
+你并没有“做错”什么，反而是在无意中遵循了**“一切皆文件，文件名即路径”**的 Unix 哲学。
+    "master" 是一个短路径。
+    "origin/master" 是一个长路径。
+    join 通吃。
+这就是为什么你把它们都当成 String 处理，代码却健壮如牛的原因。这就是抽象层（Abstraction Layer）的魔力！
