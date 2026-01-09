@@ -590,7 +590,8 @@ public class Repository implements Serializable {
     }
 
     /**
-     readObject 的局限： 你传给 readObject 的参数是 HashMap.class。注意，Java 里没有 HashMap<String, String>.class 这种东西。
+     readObject 的局限： 你传给 readObject 的参数是 HashMap.class。
+     注意，Java 里没有 HashMap<String, String>.class 这种东西。
      Java 运行的时候，所有的 <String, String> 都会被擦除，只剩下一个光秃秃的 HashMap。
      返回结果： 所以 readObject 返回的是一个原始类型（Raw Type） 的 HashMap（里面什么都能装）。
      赋值冲突： 你试图把这个“什么都能装的 HashMap” 赋值给你定义的“只能装 String 的 HashMap<String, String>”。
