@@ -83,7 +83,7 @@ public class Main {
                 break;
             case "push":
                 validateArgs(args, 3);
-                push();
+                push(args[1], args[2]);
                 break;
             default:
                 message("No command with that name exists.");

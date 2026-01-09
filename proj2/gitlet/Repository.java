@@ -373,7 +373,7 @@ public class Repository implements Serializable {
         writeContents(join(HEADS, getHeadName()), commitHash);
     }
 
-    private static Set<String> helpBuildSet() {
+    private static Set<String> helpBuildParents() {
         Set<String> parents = new HashSet<>();
         Queue<String> queue = new LinkedList<>();
         queue.add(getHeadHash());
@@ -397,7 +397,7 @@ public class Repository implements Serializable {
     }
 
     /**
-     private static Set<String> helpBuildSet() {
+     private static Set<String> helpBuildParents() {
         Set<String> parents = new HashSet<>();
         File nowFile = Commit.findFile(getHeadHash());
         Commit now = Commit.fromFile(getHeadHash());
@@ -479,7 +479,7 @@ public class Repository implements Serializable {
     public static void merge(String branchName) {
         checkMergeFirst(branchName);
         String branchHash = getBranchHead(branchName);
-        Set<String> parents = helpBuildSet();
+        Set<String> parents = helpBuildParents();
         String splitHash = helpFindSplit(branchName, parents);
         Commit current = Commit.fromFile(getHeadHash());
         Commit branch = Commit.fromFile(branchHash);
@@ -595,7 +595,8 @@ public class Repository implements Serializable {
             message("A remote with that name already exists.");
             return;
         }
-        remotes.put(args[1], args[2]);
+        String path = args[2].replace("/", java.io.File.separator);
+        remotes.put(args[1], path);
         writeObject(REMOTES, remotes);
     }
 
@@ -609,8 +610,77 @@ public class Repository implements Serializable {
         writeObject(REMOTES, remotes);
     }
 
-    public static void push() {
+    private static Set<String> buildPushCommits(String historyCommit) {
+        Set<String> pushCommits = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(getHeadHash());
+        while (!queue.isEmpty()) {
+            String currentHash = queue.remove();
+            if (pushCommits.contains(currentHash)) {
+                continue;
+            }
+            pushCommits.add(currentHash);
+            Commit current = Commit.fromFile(currentHash);
+            String parent = current.getParent();
+            String anotherParent = current.getAnotherParent();
+            if (historyCommit.equals(parent) || historyCommit.equals(anotherParent)) {
+                pushCommits.add(historyCommit);
+                continue;
+            }
+            if (parent != null) {
+                queue.add(parent);
+            }
+            if (anotherParent != null) {
+                queue.add(anotherParent);
+            }
+        }
+        if (!pushCommits.contains(historyCommit)) {
+            return null;
+        }
+        pushCommits.remove(historyCommit);
+        return pushCommits;
+    }
 
+    private static void writeCommitsAndBlobs(Set<String> sets, File remote) {
+        File remoteCommits = join(remote, "objects", "commits");
+        File remoteBlobs = join(remote, "objects", "blobs");
+        for (String file : sets) {
+            Commit pushCommit = Commit.fromFile(file);
+            File pushFile = join(remoteCommits, file);
+            writeObject(pushFile, pushCommit);
+            Set<String> pushBlobs = new HashSet<>(pushCommit.commitMap().values());
+            for (String hash : pushBlobs) {
+                File remoteBlob = join(remoteBlobs, hash);
+                if (!remoteBlob.exists()) {
+                    Object blobContend = Blob.fromFile(hash).getBlobContend();
+                    writeContents(remoteBlob, blobContend);
+                }
+            }
+        }
+    }
+
+    public static void push(String remoteName, String remoteBranchName) {
+        HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
+        String remotePath = remotes.get(remoteName);
+        if (remotePath == null || !new File(remotePath).exists()) {
+            message("Remote directory not found.");
+            return;
+        }
+        File remote = new File(remotePath);
+        File givenBranch = join(remote, "refs", "heads", remoteBranchName);
+        if (!givenBranch.exists()) {
+            Set<String> parents = helpBuildParents();
+            writeCommitsAndBlobs(parents, remote);
+        } else {
+            String branchHash = readContentsAsString(givenBranch);
+            Set<String> pushCommits = buildPushCommits(branchHash);
+            if (pushCommits == null) {
+                message("Please pull down remote changes before pushing.");
+                return;
+            }
+            writeCommitsAndBlobs(pushCommits, remote);
+        }
+        writeContents(givenBranch, getHeadHash());
     }
 
 }
