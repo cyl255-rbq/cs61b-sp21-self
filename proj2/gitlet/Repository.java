@@ -623,15 +623,19 @@ public class Repository implements Serializable {
             Commit current = Commit.fromFile(currentHash);
             String parent = current.getParent();
             String anotherParent = current.getAnotherParent();
-            if (historyCommit.equals(parent) || historyCommit.equals(anotherParent)) {
-                pushCommits.add(historyCommit);
-                continue;
-            }
             if (parent != null) {
-                queue.add(parent);
+                if (parent.equals(historyCommit)) {
+                    pushCommits.add(historyCommit);
+                } else {
+                    queue.add(parent);
+                }
             }
             if (anotherParent != null) {
-                queue.add(anotherParent);
+                if (anotherParent.equals(historyCommit)) {
+                    pushCommits.add(historyCommit);
+                } else {
+                    queue.add(anotherParent);
+                }
             }
         }
         if (!pushCommits.contains(historyCommit)) {
@@ -641,36 +645,68 @@ public class Repository implements Serializable {
         return pushCommits;
     }
 
-    private static void writeCommitsAndBlobs(Set<String> sets, File remote) {
-        File remoteCommits = join(remote, "objects", "commits");
-        File remoteBlobs = join(remote, "objects", "blobs");
-        for (String file : sets) {
-            Commit pushCommit = Commit.fromFile(file);
-            File pushFile = join(remoteCommits, file);
-            writeObject(pushFile, pushCommit);
-            Set<String> pushBlobs = new HashSet<>(pushCommit.commitMap().values());
-            for (String hash : pushBlobs) {
-                File remoteBlob = join(remoteBlobs, hash);
-                if (!remoteBlob.exists()) {
-                    Object blobContend = Blob.fromFile(hash).getBlobContend();
-                    writeContents(remoteBlob, blobContend);
+    private static void writeCommitsAndBlobs(Set<String> commitsSet, File remoteDir, boolean isFetch) {
+        File sourceCommitsDir;
+        File sourceBlobsDir;
+        File destCommitsDir;
+        File destBlobsDir;
+        if (isFetch) {
+            sourceCommitsDir = join(remoteDir, "objects", "commits");
+            sourceBlobsDir = join(remoteDir, "objects", "blobs");
+            destCommitsDir = COMMITS;
+            destBlobsDir = BLOBS;
+        } else {
+            sourceCommitsDir = COMMITS;
+            sourceBlobsDir = BLOBS;
+            destCommitsDir = join(remoteDir, "objects", "commits");
+            destBlobsDir = join(remoteDir, "objects", "blobs");
+        }
+        Set<String> visitedBlobs = new HashSet<>();
+        for (String commitHash : commitsSet) {
+            File destFile = join(destCommitsDir, commitHash);
+            File sourceFile = join(sourceCommitsDir, commitHash);
+            if (!sourceFile.exists()) {
+                continue;
+            }
+            Commit commit = readObject(sourceFile, Commit.class);
+            if (!destFile.exists()) {
+                writeObject(destFile, commit);
+            }
+            Set<String> commitBlobs = new HashSet<>(commit.commitMap().values());
+            for (String blobHash : commitBlobs) {
+                if (visitedBlobs.contains(blobHash)) {
+                    continue;
+                }
+                visitedBlobs.add(blobHash);
+                File destBlobFile = join(destBlobsDir, blobHash);
+                File sourceBlobFile = join(sourceBlobsDir, blobHash);
+                if (!sourceBlobFile.exists()) {
+                    continue;
+                }
+                if (!destBlobFile.exists()) {
+                    Blob blob = readObject(sourceBlobFile, Blob.class);
+                    writeObject(destBlobFile, blob);
                 }
             }
+        }
+    }
+
+    private static void remotesPathExist(String remotePath) {
+        if (remotePath == null || !new File(remotePath).exists()) {
+            message("Remote directory not found.");
+            System.exit(0);
         }
     }
 
     public static void push(String remoteName, String remoteBranchName) {
         HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
         String remotePath = remotes.get(remoteName);
-        if (remotePath == null || !new File(remotePath).exists()) {
-            message("Remote directory not found.");
-            return;
-        }
+        remotesPathExist(remotePath);
         File remote = new File(remotePath);
         File givenBranch = join(remote, "refs", "heads", remoteBranchName);
         if (!givenBranch.exists()) {
             Set<String> parents = helpBuildParents();
-            writeCommitsAndBlobs(parents, remote);
+            writeCommitsAndBlobs(parents, remote, false);
         } else {
             String branchHash = readContentsAsString(givenBranch);
             Set<String> pushCommits = buildPushCommits(branchHash);
@@ -678,9 +714,63 @@ public class Repository implements Serializable {
                 message("Please pull down remote changes before pushing.");
                 return;
             }
-            writeCommitsAndBlobs(pushCommits, remote);
+            writeCommitsAndBlobs(pushCommits, remote, false);
         }
         writeContents(givenBranch, getHeadHash());
     }
 
+    private static Set<String> buildFetchCommits(File remote, String remoteHeadHash) {
+        Set<String> fetchCommits = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(remoteHeadHash);
+        File fetchCommitFile = join(remote, "objects", "commits");
+        while (!queue.isEmpty()) {
+            String currentHash = queue.remove();
+            if (fetchCommits.contains(currentHash)) {
+                continue;
+            }
+            File localFile = join(COMMITS, currentHash);
+            if (localFile.exists()) {
+                continue;
+            }
+            fetchCommits.add(currentHash);
+            File fetchCommit = join(fetchCommitFile, currentHash);
+            Commit current = readObject(fetchCommit, Commit.class);
+            String parent = current.getParent();
+            String anotherParent = current.getAnotherParent();
+            if (parent != null) {
+                queue.add(parent);
+            }
+            if (anotherParent != null) {
+                queue.add(anotherParent);
+            }
+        }
+        return fetchCommits;
+    }
+
+    public static void fetch(String remoteName, String remoteBranchName) {
+        HashMap<String, String> remotes = readObject(REMOTES, HashMap.class);
+        String remotePath = remotes.get(remoteName);
+        remotesPathExist(remotePath);
+        File remote = new File(remotePath);
+        File givenBranch = join(remote, "refs", "heads", remoteBranchName);
+        if (!givenBranch.exists()) {
+            message("That remote does not have that branch.");
+            return;
+        }
+        String remoteHeadHash = readContentsAsString(givenBranch);
+        Set<String> fetchCommits = buildFetchCommits(remote, remoteHeadHash);
+        writeCommitsAndBlobs(fetchCommits, remote, true);
+        File currentRemote = join(HEADS, remoteName);
+        if (!currentRemote.exists()) {
+            currentRemote.mkdir();
+        }
+        File curRemoteHead = join(currentRemote, remoteBranchName);
+        writeContents(curRemoteHead, remoteHeadHash);
+    }
+
+    public static void pull(String remoteName, String remoteBranchName) {
+        fetch(remoteName, remoteBranchName);
+        merge(remoteName + "/" + remoteBranchName);
+    }
 }

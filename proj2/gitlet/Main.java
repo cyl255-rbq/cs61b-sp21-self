@@ -85,6 +85,14 @@ public class Main {
                 validateArgs(args, 3);
                 push(args[1], args[2]);
                 break;
+            case "fetch":
+                validateArgs(args, 3);
+                fetch(args[1], args[2]);
+                break;
+            case "pull":
+                validateArgs(args, 3);
+                pull(args[1], args[2]);
+                break;
             default:
                 message("No command with that name exists.");
                 System.exit(0);

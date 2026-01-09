@@ -1,0 +1,45 @@
+    private static void writeCommitsAndBlobs(Set<String> commitsSet, File remoteDir, boolean isFetch) {
+        File sourceCommitsDir;
+        File sourceBlobsDir;
+        File destCommitsDir;
+        File destBlobsDir;
+        if (isFetch) {
+            sourceCommitsDir = join(remoteDir, "objects", "commits");
+            sourceBlobsDir = join(remoteDir, "objects", "blobs");
+            destCommitsDir = COMMITS;
+            destBlobsDir = BLOBS;
+        } else {
+            sourceCommitsDir = COMMITS;
+            sourceBlobsDir = BLOBS;
+            destCommitsDir = join(remoteDir, "objects", "commits");
+            destBlobsDir = join(remoteDir, "objects", "blobs");
+        }
+        Set<String> visitedBlobs = new HashSet<>();
+        for (String commitHash : commitsSet) {
+            File destFile = join(destCommitsDir, commitHash);
+            File sourceFile = join(sourceCommitsDir, commitHash);
+            if (!sourceFile.exists()) {
+                continue;
+            }
+            Commit commit = readObject(sourceFile, Commit.class);
+            if (!destFile.exists()) {
+                writeObject(destFile, commit);
+            }
+            Set<String> commitBlobs = new HashSet<>(commit.commitMap().values());
+            for (String blobHash : commitBlobs) {
+                if (visitedBlobs.contains(blobHash)) {
+                    continue;
+                }
+                visitedBlobs.add(blobHash);
+                File destBlobFile = join(destBlobsDir, blobHash);
+                File sourceBlobFile = join(sourceBlobsDir, blobHash);
+                if (!sourceBlobFile.exists()) {
+                    continue;
+                }
+                if (!destBlobFile.exists()) {
+                    Blob blob = readObject(sourceBlobFile, Blob.class);
+                    writeObject(destBlobFile, blob);
+                }
+            }
+        }
+    }
