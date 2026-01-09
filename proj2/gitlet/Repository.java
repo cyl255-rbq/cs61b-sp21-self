@@ -645,7 +645,7 @@ public class Repository implements Serializable {
         return pushCommits;
     }
 
-    private static void writeCommitsAndBlobs(Set<String> commitsSet, File remoteDir, boolean isFetch) {
+    private static void writeCommitsBlobs(Set<String> commitsSet, File remoteDir, boolean isFetch) {
         File sourceCommitsDir;
         File sourceBlobsDir;
         File destCommitsDir;
@@ -706,7 +706,7 @@ public class Repository implements Serializable {
         File givenBranch = join(remote, "refs", "heads", remoteBranchName);
         if (!givenBranch.exists()) {
             Set<String> parents = helpBuildParents();
-            writeCommitsAndBlobs(parents, remote, false);
+            writeCommitsBlobs(parents, remote, false);
         } else {
             String branchHash = readContentsAsString(givenBranch);
             Set<String> pushCommits = buildPushCommits(branchHash);
@@ -714,7 +714,7 @@ public class Repository implements Serializable {
                 message("Please pull down remote changes before pushing.");
                 return;
             }
-            writeCommitsAndBlobs(pushCommits, remote, false);
+            writeCommitsBlobs(pushCommits, remote, false);
         }
         writeContents(givenBranch, getHeadHash());
     }
@@ -760,7 +760,7 @@ public class Repository implements Serializable {
         }
         String remoteHeadHash = readContentsAsString(givenBranch);
         Set<String> fetchCommits = buildFetchCommits(remote, remoteHeadHash);
-        writeCommitsAndBlobs(fetchCommits, remote, true);
+        writeCommitsBlobs(fetchCommits, remote, true);
         File currentRemote = join(HEADS, remoteName);
         if (!currentRemote.exists()) {
             currentRemote.mkdir();
