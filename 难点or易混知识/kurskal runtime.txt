@@ -1,0 +1,6 @@
+Operation		Number of Times
+union		O(V)
+isConnected	O(E)
+链接检查的是边，最坏的情况是查看所有边，也可能提前结束
+而union不是E的原因是，E>=V，一个V顶点的树只有V-1条边，因为环的边数大于顶点数
+因为一个V顶点的树只有V-1条边，所以终止条件也是这个:(!pq.isEmpty() && mst.size() < G.V() - 1)

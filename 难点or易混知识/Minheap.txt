@@ -1,0 +1,57 @@
+这里是一个基于**最小堆（Min-Heap）**实现的优先队列伪代码：
+1. 核心数据结构
+通常我们用数组 heap 来存储节点。
+    对于索引为 i 的节点：
+        左孩子：2 * i + 1
+        右孩子：2 * i + 2
+        父节点：(i - 1) / 2
+2. 核心操作伪代码
+添加元素：add(item)
+对应 PPT 中的 O(logV) 复杂度。
+Python
+function add(item):
+    heap.append(item)          # 1. 先把新元素放到数组最后
+    swim(heap.size - 1)        # 2. 执行上浮，维持堆属性
+移除最小值：removeSmallest()
+对应 PPT 中的 O(logV) 复杂度。
+Python
+function removeSmallest():
+    min_val = heap[0]          # 1. 最小值总是在根部
+    heap[0] = heap.pop_last()  # 2. 把最后一个元素挪到根部
+    sink(0)                    # 3. 执行下沉，维持堆属性
+    return min_val
+3. 辅助函数（逻辑支柱）
+上浮：swim(k)
+当一个元素比它的父节点小时，它需要向上移动。
+Python
+function swim(k):
+    while k > 0 and heap[k] < heap[parent(k)]:
+        swap(heap[k], heap[parent(k)])
+        k = parent(k)
+下沉：sink(k)
+当一个元素比它的子节点大时，它需要向下移动。注意：要和两个孩子中较小的那个交换。
+Python
+function sink(k):
+    while has_left_child(k):
+        smaller_child = left_child(k)
+        # 如果有右孩子且右孩子更小
+        if has_right_child(k) and heap[right_child(k)] < heap[left_child(k)]:
+            smaller_child = right_child(k)
+        if heap[k] <= heap[smaller_child]: break # 已经比孩子都小了，停止
+        swap(heap[k], heap[smaller_child])
+        k = smaller_child
+4. 特殊操作：修改优先级 changePriority
+这是 Dijkstra 算法中最关键的一步，也是 O(logV) 复杂度的来源。
+Python
+function changePriority(item, new_priority):
+    k = find_index(item)       # 找到该元素在堆中的索引（通常用 HashMap 记录索引）
+    old_priority = heap[k].priority
+    heap[k].priority = new_priority
+    if new_priority < old_priority:
+        swim(k)                # 优先级变小（变强），往上走
+    else:
+        sink(k)                # 优先级变大（变弱），往下走
+总结
+    add：末尾插入 + swim。
+    removeSmallest：首尾交换 + sink。
+    heapify (自底向上建堆)：从最后一个非叶子节点开始依次执行 sink，复杂度为 O(E)。

@@ -1,0 +1,58 @@
+(a) 如果一个无向图的所有顶点都可以被划分成两个不相交的集合 U 和 V，
+并且每条边都连接 U 中的一个元素和 V 中的一个元素，则称该无向图为二分图。
+例如，下图左侧的图是二分图，而右侧的图不是。请提供一个判断图是否为二分图的算法。该算法的运行时间是多少？
+
+def isBipartite(graph):
+    # 初始化：所有节点颜色设为 0 (表示未访问/未染色)
+    color = [0] * num_vertices 
+    
+    # 循环处理每一个节点，防止图是不连通的（有多个小分块）
+    for start_node in range(num_vertices):
+        if color[start_node] == 0:  # 发现一个还没染色的新分块
+            
+            # 开始 BFS：把起点染成颜色 1，并加入队列
+            color[start_node] = 1
+            queue = [start_node]
+            
+            while queue is not empty:
+                u = queue.pop(0)  # 取出一个节点 u
+                
+                # 核心步骤：扫描 u 的所有邻居 v
+                for v in neighbors_of_u:
+                    
+                    # 情况 1: 邻居 v 还没染色 (相当于没被 marked)
+                    if color[v] == 0:
+                        color[v] = -color[u] # 染成和 u 相反的颜色 (1 变 -1, -1 变 1)
+                        queue.push(v)
+                        
+                    # 情况 2: 邻居 v 已经染过色了 (也就是你担心的“marked过的情况”)
+                    else:
+                        # 瞪它一眼：看它的颜色是否和 u 一样
+                        if color[v] == color[u]:
+                            return False # 发现冲突！不是二分图
+                            
+    return True # 所有边都检查过了，没有冲突
+
+
+
+
+def isBipartiteDFS(u, current_color, color_array):
+    # 1. 给当前节点染色
+    color_array[u] = current_color
+    
+    # 2. 检查所有邻居
+    for v in neighbors_of(u):
+        # 情况 A: 邻居还没染色
+        if color_array[v] == 0:
+            # 递归给邻居染上相反颜色 (-current_color)
+            # 如果深处发现了冲突，一路返回 False
+            if not isBipartiteDFS(v, -current_color, color_array):
+                return False
+        
+        # 情况 B: 邻居已经染过色了 (也就是你担心的 marked 情况)
+        else:
+            # “瞪一眼”：如果颜色一样，说明冲突了
+            if color_array[v] == current_color:
+                return False
+                
+    return True # 这一路钻到底都没发现冲突

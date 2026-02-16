@@ -1,0 +1,47 @@
+1. 为什么 BFS 能保证“最短”？
+在无权图（每条边长度都看作 1）中：
+    第一层波纹：所有距离起点为 1 的点。
+    第二层波纹：所有距离起点为 2 的点。
+    ...
+    第 k 层波纹：所有距离起点为 k 的点。
+因为 BFS 是按层扩张的，它绝不会跳过第 2 层直接去第 3 层。所以，当你第一次回到起点（或者说第一次发现一条边指向已经访问过的路径）时，你走过的路程一定是步数最少的。
+
+def findShortestCycle(graph):
+    V = graph.num_vertices
+    min_cycle = infinity  # 初始化全局最短环长度为无穷大
+
+    # 外壳：对每一个顶点都尝试作为起点跑一次 BFS
+    for s in range(V):
+        
+        # 内核：寻找包含顶点 s 的最短环
+        queue = []
+        dist = [infinity] * V  # 记录从 s 到各个点的距离
+        
+        # 1. 初始化：把起点 s 的所有邻居放入队列
+        for v in neighbors_of(s):
+            dist[v] = 1
+            queue.push(v)
+            
+        # 2. 标准 BFS 流程
+        while queue is not empty:
+            u = queue.pop(0)
+            
+            # 如果我们走到了一个点 u，它的邻居又是起点 s
+            # 那么我们就找到了一个经过 s 的环，长度为 dist[u] + 1
+            for w in neighbors_of(u):
+                if w == s:
+                    # 找到了环！因为 BFS 是按层扩大的，这一定是包含 s 的最短环
+                    current_cycle_length = dist[u] + 1
+                    min_cycle = min(min_cycle, current_cycle_length)
+                    
+                    # 找到了 s 的最短环后，可以提前结束这次 BFS
+                    # (清空队列跳出 while)
+                    queue = [] 
+                    break 
+                
+                # 如果 w 不是起点且没被访问过，继续探索
+                if dist[w] == infinity:
+                    dist[w] = dist[u] + 1
+                    queue.push(w)
+                    
+    return min_cycle
