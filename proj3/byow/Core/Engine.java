@@ -10,7 +10,8 @@ public class Engine {
     public static final int HEIGHT = 30;
 
     /**
-     * Method used for exploring a fresh world. This method should handle all inputs,
+     * Method used for exploring a fre
+     * sh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
