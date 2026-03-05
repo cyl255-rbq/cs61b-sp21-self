@@ -1,0 +1,64 @@
+import java.util.Iterator;
+
+public class MyCollection<T> implements Iterable<T> {
+    private T[] items;
+    private int size;
+
+    public MyCollection(T[] items) {
+        this.items = items;
+        this.size = items.length;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new MyIterator();
+    }
+
+    // 内部类实现 Iterator
+    private class MyIterator implements Iterator<T> {
+        private int index = 0;
+
+        @Override
+        public boolean hasNext() {
+            return index < size;
+        }
+
+        @Override
+        public T next() {
+            return items[index++];
+        }
+    }
+}
+
+
+
+Iterator<String> it = a.iterator();->(通过class A<T> implement iterable<T>实现的，让他可以拥有可以返回iterator的mythod)
+while (it.hasNext()) {(返回的那个iterator，即迭代器，拥有自定义的迭代方法，需要自己写)
+    String s = it.next();
+    System.out.println(s);
+}
+
+List<String> list = Arrays.asList("A", "B", "C");
+for (String s : list) {   // 这里就利用了 Iterable
+    System.out.println(s);
+}
+
+for (String s : list) { ... }
+// 实际编译为：
+for (Iterator<String> it = list.iterator(); it.hasNext(); ) {
+    String s = it.next();
+    ...
+}
+
+
+为什么一定要两个接口？（DVD 与 播放器）
+想象一下，如果 Iterable 和 Iterator 强行合并成一个接口，会发生什么？
+    Iterable (可迭代的对象)： 就像是一张 DVD 光盘。它存储着所有数据，它是静态的。
+    Iterator (迭代器)： 就像是 DVD 播放器（或者里面的激光头）。它知道现在读到了哪一秒，它是动态的、有状态的。
+核心痛点： 如果光盘自己就是播放器，那么这张光盘同一时间只能被一个人看。
+如果你想在两个不同的循环里同时遍历同一个 List，光盘就会产生“精神分裂”，因为它只有一个“当前位置”状态。
+通过返回一个新的内部类实例（Iterator），Java 允许你为同一个集合开启无数个独立的迭代过程，每个迭代器互不干扰。
+
+Iterable： 告诉别人“我能被点名”。
+iterator() 方法： 就像一个“面试官分配器”，每次调用都派出一个新的面试官。
+Iterator 内部类： 就是那个“面试官”，他手里拿着名单（数据），一个一个点名。

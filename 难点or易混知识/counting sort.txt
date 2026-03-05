@@ -1,0 +1,54 @@
+Counting Sort Runtime Analysis
+Total runtime on N keys with alphabet of size R: Θ(N+R)
+Create an array of size R to store counts: Θ(R)
+Counting number of each item: Θ(N)
+Calculating target positions of each item: Θ(R)
+Creating an array of size N to store ordered data: Θ(N)
+Copying items from original array to ordered array: Do N times:
+OCheck target position: Θ(1)
+OUpdate target position: Θ(1)
+OCopy the item: Θ(1)
+Copying items from ordered array back to original array: Θ(N)
+Memory usage: Θ(N+R)(实际上是N(For ordered array.)和两个R(For counts and starting points.))
+Bottom line: If N is ≥ R, then we expect reasonable performance.
+
+
+1. “已知”与“未知”的博弈
+    扑克牌（已知、固定、极小）：
+        不管你手里拿的是什么牌，你预先就知道世界上只有 4 种花色。
+        这种映射关系是“出厂自带”的，你不需要看数据就能写出：Spade -> 0, Heart -> 1, Club -> 2, Diamond -> 3。
+        因为 R 固定为 4，且 R 极其微小，所以这个“映射税”几乎为零。
+    数字（未知、动态、极大）：
+        如果你有 100 个城市的人口，你预先并不知道会出现哪些数字。
+        你不能预先写死 4,778,000 -> 1，因为万一下一组数据里出现了 4,777,999 呢？
+        关键点：对于扑克牌，你是在给“规则”排序；对于数字，你是在给“数据”排序。
+2. 定义大小的“成本”
+你说“给数字定义大小”，这当然可以，但这会产生两难的境地：
+    方案 A：直接定义（计数排序逻辑）
+        你定义“1 就是 1，38,000,000 就是 38,000,000”。
+        结果：你必须为了这个定义开一个 3800 万长度的数组。这就是你看到的那个“浪费 0”的昂贵代价。
+    方案 B：映射定义（你的 1, 2, 3 映射法）
+        你定义“这一组数里，最小的叫 1，第二小的叫 2”。
+        麻烦来了：计算机怎么知道谁是最小的？它必须把 100 个城市的人口互相比一比。
+        一旦开始“互相比一比”，你就回到了比较类排序的世界，那里的理论下限是 Ω(NlogN)。
+3. 为什么数字映射是“逻辑套娃”？
+想象你要给三个数排序：[100, 1, 50]。
+如果你想给它们映射成 [3, 1, 2]：
+    你得先知道 1<50<100。
+    你得先算出这个顺序，才能完成映射。
+    悖论：既然你已经算出了 1<50<100，那你其实已经排好序了！
+    那你还要映射去跑计数排序干什么呢？这就好比你为了去马路对面，先坐飞机绕了地球一圈。
+总结：为什么扑克牌赢了？
+扑克牌之所以能用这种映射，是因为它的 R (Alphabet Size) 与 N (数据量) 是完全脱钩的。
+    无论你排 10 张牌还是 10 亿张牌，花色永远只有 4 种。
+    这使得计数排序的 O(N+R) 里的 R 变得微不足道。
+而数字排序的尴尬在于：如果你想让 R 变小（映射法），你就得先花 O(NlogN) 的代价去“寻找”这个 R。如果不映射，你就得承受 R 极大带来的内存爆炸。
+    底层逻辑： 计数排序的“快”是建立在**“我不需要看数据关系，我只需要看数据取值”**的前提下的。扑克牌的取值范围是上帝定死的，所以它最快。
+这就是为什么在 CS61B 的对比表中，计数排序（Counting Sort）被特别标注为只适用于 “Alphabet keys only”（即取值范围固定且已知的场景）。
+
+
+问：我们刚看到基数排序相对于列表中的元素数量 N 有着极佳的运行时间。基于这一事实，我们能否说基数排序就是最值得使用的算法？
+答：不能。
+    受限于其他参数： 尽管基数排序的时间复杂度相对于元素数量 N 是线性的，但它的运行时间还取决于基数 R 的大小（Radix）以及最长“单词”的长度 W（或者数字的位数）。如果 W 或 R 非常大，实际运行速度可能并不理想。
+    数据的局限性： 并不是所有对象都能使用基数排序。因为它要求对象必须能够被拆分成独立的“位”或“数字”。
+    比较排序的通用性： 相比之下，比较类排序算法（Comparison Sorts）具有更强的普适性。只要一个对象定义了 compareTo 方法（即规定了如何比较大小），就可以使用比较排序。而且，如果该 compareTo 方法执行速度很快，比较类排序的效果会非常好。

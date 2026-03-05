@@ -1,0 +1,46 @@
+        Rectangle neighbour = null;
+        switch (dir) {
+            case UP -> {
+                if (heightSign > 0) {
+                    p = p.shiftPosition(xRange, height);
+                } else {
+                    p = p.shiftPosition(xRange, 1);
+                }
+                //tiles[p.x()][p.y()] = Tileset.SAND;
+                //todo 两个房间添加关系，上面是下面的上，下面是上面的下，应该需要传递Rectangele room 和 Direction dir
+                neighbour = addRectangle(tiles, p, randomSign, 1);
+            }
+            case DOWN -> {
+                if (heightSign < 0) {
+                    p = p.shiftPosition(xRange, height);
+                } else {
+                    p = p.shiftPosition(xRange, -1);
+                }
+                neighbour = addRectangle(tiles, p, randomSign, -1);
+            }
+            case LEFT -> {
+                if (widthSign < 0) {
+                    p = p.shiftPosition(width, yRange);
+                } else {
+                    p = p.shiftPosition(-1, yRange);
+                }
+                neighbour = addRectangle(tiles, p, -1, randomSign);
+            }
+            case RIGHT -> {
+                if (widthSign > 0) {
+                    p = p.shiftPosition(width, yRange);
+                } else {
+                    p = p.shiftPosition(1, yRange);
+                }
+                neighbour = addRectangle(tiles, p, 1, randomSign);
+            }
+        }
+        bothTrue(room, neighbour, dir);
+
+为什么说neighbor未初始化 ?
+
+这个问题是因为 Java 编译器的**“确定性赋值”（Definite Assignment）**检查机制。
+
+简单来说：编译器在看你的代码时，它会考虑所有可能的路径。在它眼里，虽然你写了 UP, DOWN, LEFT, RIGHT 四个分支，
+但它不能 100% 保证 dir 的值一定会落在其中一个。如果 dir 是一个没被涵盖的值，switch 块就会被直接跳过，
+这时候运行到下面的 bothTrue(...) 时，neighbour 变量里确实什么都没有，程序会崩溃。

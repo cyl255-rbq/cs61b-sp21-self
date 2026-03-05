@@ -1,0 +1,62 @@
+递归实现以下方法 `msd`，该方法对字符串列表执行 MSD 基数排序，并返回排序后的字符串列表。为简单起见，假设每个字符串的长度相同。您可能不需要以下所有代码行。
+课堂上，我们用计数排序作为 MSD 基数排序的子程序，但其实任何排序算法都可以！这里，你可以使用 stableSort 方法，它会根据给定的索引对字符串列表进行原地排序，比较两个字符串。最后，你可能会发现 List 类的以下方法很有用：
+1. 列表subList(int fromIndex, int toIndex)。返回此列表中位于指定 fromIndex（包含）和 toIndex（不包含）之间的部分。
+2. addAll(集合) c). 将指定集合中的所有元素按照指定集合的​​迭代器返回的顺序添加到此列表的末尾。
+1 public static List<String> msd(List<String> items) {
+2
+3 	return __________________________________________________________________;
+4 }
+5
+6 private static List<String> msd(List<String> items, int index) {
+7
+8 	if (_____________________________________________________________________) {
+9 		return items;
+10 	}
+11 	List<String> answer = new ArrayList<>();
+12 	int start = 0;
+13
+14 _________________________________________________________________________;
+15	 for (int end = 1; end <= items.size(); end += 1) {
+16
+17 		if (_________________________________________________________________) {
+18
+19 _________________________________________________________________;
+20
+21 _________________________________________________________________;
+22
+23 _________________________________________________________________;
+24 		}
+25 	}
+26	 return answer;
+27 }
+28 /* You don't need to understand the implementation of this method to use it! */
+29 private static void stableSort(List<String> items, int index) {
+30 	items.sort(Comparator.comparingInt(o -> o.charAt(index)));
+31 }
+
+Solution:
+1 public static List<String> msd(List<String> items) {
+2 	return msd(items, 0);
+3 }
+4
+5 private static List<String> msd(List<String> items, int index) {
+6 	if (items.size() <= 1 || index >= items.get(0).length()) {//这里是因为假如有两个完全一样的item，比如apple和apple，基本情况仅靠size无法分开
+7 		return items;
+8 	}
+9 	List<String> answer = new ArrayList<>();
+10	 stableSort(items, index);
+11 	int start = 0;
+12 	for (int end = 1; end <= items.size(); end += 1) {
+13 		if (end == items.size() || items.get(start).charAt(index) != items.get(end).charAt(index)) {//这里是因为最后一个sublist，end后面没有了，所以分不出字符的不同，所以靠==size来判断边界
+14 			List<String> subList = items.subList(start, end);
+15 			answer.addAll(msd(subList, index + 1));
+16 			start = end;
+17 		}
+18 	}
+19 	return answer;
+20 }
+21
+22 /* You don't need to understand the implementation of this method to use it! */
+23 private static void stableSort(List<String> items, int index) {
+24 	items.sort(Comparator.comparingInt(o -> o.charAt(index)));
+25 }

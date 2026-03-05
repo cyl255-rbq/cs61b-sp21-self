@@ -38,6 +38,7 @@ public class Engine {
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
+
     public TETile[][] interactWithInputString(String input) {
         // TODO: Fill out this method so that it run the engine using the input
         // passed in as an argument, and return a 2D tile representation of the
@@ -47,7 +48,33 @@ public class Engine {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
 
-        TETile[][] finalWorldFrame = null;
+        //WorldGenerator world = new WorldGenerator(WIDTH, HEIGHT, input);
+        WorldGenerator world = getWorldGenerator(input);
+        TETile[][] finalWorldFrame = world.generate();
         return finalWorldFrame;
     }
+
+    private static WorldGenerator getWorldGenerator(String input) {
+        if (input == null || input.isEmpty()) {
+            throw new IllegalArgumentException("输入不能为空");
+        }
+        if (input.charAt(0) != 'N' && input.charAt(0) != 'n') {
+            throw new IllegalArgumentException("第一个字符必须是 'N' 或 'n'");
+        }
+        int end = Math.max(input.indexOf('S'), input.indexOf('s'));
+        if (end == -1) {
+            throw new IllegalArgumentException("没有结束符号");
+        }
+        String seedStr = input.substring(1, end).replaceAll("[^0-9]", "");
+        long seed = Long.parseLong(seedStr);
+        WorldGenerator world = new WorldGenerator(WIDTH, HEIGHT, seed);
+        return world;
+    }
+
+//    public static void main(String[] args) {
+//        Engine engine = new Engine();
+//        String a = "n3312agreS";
+//        engine.interactWithInputString(a);
+//    }
+
 }

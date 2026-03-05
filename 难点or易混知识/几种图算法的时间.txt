@@ -1,0 +1,7 @@
+Problem		Algorithm		Runtime (if E > V)	Notes
+Shortest Paths	Dijkstra's		O(E log V)			Fails for negative weight edges.负权重失效
+MST			Prim's		O(E log V)			Analogous to Dijkstra's.类似...
+MST			Kruskal's		O(E log E)			Uses WQUPC.
+MST			Kruskal's with	O(E log* V)		Uses WQUPC.
+			pre-sorted edges
+Shortest Paths	DAG's		O(E+V)			不断后序dfs，然后反转列表(即拓扑排序)，然后按照顺序松弛每个边(V+E)因为每个边只松弛一次，且访问了所有顶点

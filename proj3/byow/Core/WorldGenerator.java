@@ -19,12 +19,16 @@ public class WorldGenerator {
     private boolean leftbound = false;
     private boolean rightbound = false;
 
-    WorldGenerator(int width, int height, int seed) {
+    WorldGenerator(int width, int height, long seed) {
         this.width = width;
         this.height = height;
         this.seed = seed;
         this.random = new Random(seed);
         this.world = new TETile[width][height];
+    }
+
+    private TETile[][] world() {
+        return this.world;
     }
 
     public void fillWithNothing(TETile[][] tiles) {
@@ -156,8 +160,8 @@ public class WorldGenerator {
     }
 
     public void addRoomAssist(TETile[][] tiles, Positon p, Rectangle room, int widthSign, int heightSign) {
-        int width = RandomUtils.uniform(random, 2, 6) * widthSign;
-        int height = RandomUtils.uniform(random, 2, 6) * heightSign;
+        int width = RandomUtils.uniform(random, 3, 6) * widthSign;
+        int height = RandomUtils.uniform(random, 3, 6) * heightSign;
         if (collision(tiles, p, room, width, height)) {
             return;
         }
@@ -167,7 +171,7 @@ public class WorldGenerator {
 
     public void addHallwaysAssist(TETile[][] tiles, Positon p, Rectangle room, int lengthSign, int anotherSign) {
         int anotherLen = RandomUtils.uniform(random, 1, 2) * anotherSign;
-        int length = RandomUtils.uniform(random, 4, 9) * lengthSign;
+        int length = RandomUtils.uniform(random, 4, 6) * lengthSign;
         int width;
         int height;
         if (RandomUtils.bernoulli(random)) {
@@ -311,13 +315,34 @@ public class WorldGenerator {
     }
 
     public void generate(TETile[][] tiles) {
-        while ((!this.leftbound || !this.rightbound) ) {//&& alternative.size() < (WIDTH * HEIGHT / 20)
+        while (!this.leftbound || !this.rightbound) {// && alternative.size() < 50
             extendRectangle(tiles, randomRectangle());
         }
     }
 
+    private void addStart(TETile[][] tiles) {
+        int width = RandomUtils.uniform(random, 3, 7) * (RandomUtils.bernoulli(random) ? 1 : -1);
+        int height = RandomUtils.uniform(random, 3, 7) * (RandomUtils.bernoulli(random) ? 1 : -1);
+        while (alternative.isEmpty()) {
+            int x = RandomUtils.uniform(random, 1, WIDTH - 1);
+            int y = RandomUtils.uniform(random, 1, HEIGHT - 1);
+            Positon p = new Positon(x, y);
+            if (!outEdges(p, width, height)) {
+                addRoomHelper(tiles, p, width, height);
+                alternative.add(new Rectangle(p, width, height));
+            }
+
+        }
+    }
+
     public TETile[][] generate() {
-        //todo
+        WorldGenerator generator = new WorldGenerator(WIDTH, HEIGHT, seed);
+        TETile[][] world = generator.world;
+        fillWithNothing(world);
+        addStart(world);
+        generate(world);
+        fillWall(world);
+        System.out.println(TETile.toString(world));
         return world;
     }
 
@@ -325,28 +350,8 @@ public class WorldGenerator {
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
-        TETile[][] world = new TETile[80][30];
-        WorldGenerator a = new WorldGenerator(80,30,1232223);
-        a.fillWithNothing(world);
-        //Positon p = new Positon(80, 30);
-        Positon p0 =new Positon(0,0);
-        Positon p1 = new Positon(20,15);
-        Positon p2 = new Positon(40, 15);
-        Positon p3 = new Positon(46,21);
-        //范围是1-78
-        Positon p4 = new Positon(20,7);
-        Positon p5 = new Positon(60,20);
-        Positon pEdge = new Positon(76,26);
-        Positon pEdge2 = new Positon(74,28);
-        Positon pEdge3 = new Positon(5,2);
-        Positon pEdge5= new Positon(3,1);   //a.addRoom(world,pEdge);
-        Positon pHall = new Positon(6,3);
-        Positon pHall2 = new Positon(73,26);
-
-        a.addRoomHelper(world,p2, -3, -3);
-        a.alternative.add(new Rectangle(p2, -3, -3));
-        a.generate(world);
-        a.fillWall(world);
+        WorldGenerator a = new WorldGenerator(80,30,16322323);
+        TETile[][] world = a.generate();
         ter.renderFrame(world);
     }
 }

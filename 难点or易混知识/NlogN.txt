@@ -1,0 +1,27 @@
+Show that N log N∈Ω(log(N!))
+Proof:
+log(N!) = log(N) + log(N-1) + log(N-2) + .... + log(1)
+N log N = log(N) + log(N) + log(N) + ... log(N)
+Therefore N log N∈Ω(log(N!)
+
+Given that N! > (N/2)^N/2
+Show that log(N!)∈Ω(N log N).
+We have that N! > (N/2)^N/2
+Taking the log of both sides, we have that log(N!) >log(N/2)^N/2)
+Bringing down the exponent we have that log(N!) > N/2 log(N/2).
+Discarding the unnecessary constant, we have log(N!)∈Ω(N log (N/2))
+ From there, we have that log(N!)∈Ω(N log N)
+
+Consider the functions N! and (N/2)^N/2
+Is N!∈Ω((N/2)^N/2)? Prove your answer.
+10!
+10*9*8*7*6**1
+5^5
+5*5*5*5*5
+
+
+你担心的“有的方式很复杂”可能是指：“如果我用一个超级复杂的办法去转化，那下限不就不准了吗？”
+这就是规约中的一个硬性要求：转化过程（Reduction Process）必须是“廉价”的。
+    如果我们要证明 B 的下限，我们要求的转化过程（把 A 变成 B，再从 B 的结果变回 A）必须比 A 本身的下限要快得多。
+    例子： 排序下限是 NlogN。如果你用的转化方法本身就要花 N2 时间，那这个规约就失败了，因为它没法证明 B 贡献了多少工作量。
+    关键点： 我们只选择那些极简的转化方式（通常是 O(N) 或 O(1)）。这样，整条流水线的耗时几乎全由“黑盒 B”贡献。

@@ -1,0 +1,17 @@
+runtime优于merge sort但是目前无法证明，根据经验
+本质是bst，小于的在左边，大于的在右边，而bst也会退化成n^2
+partition如果用3scan则是stable，用hoare则不是
+如果用hoare分区是inplace,3scan则不是
+比如考虑 3112和2331
+在最坏的情况下，如果是3scan则所有元素相同或12345，进行n^2次swap，如果是hoare，则是12345这种最坏，
+因为hoare会把如果所有都相同会把pivot交换到最终间，假设L和G次次都需要swap，则需要n/2次交换所有，第二层(n-1)/2
+加一起1+2+3+...+n/2为N^2
+
+每个算法都至少查看所有元素，所以最少都进行N次，runtime不会比n小
+
+有哪些技术可以用来降低快速排序算法出现最坏情况运行时间的概率？
+1. Randomly choose pivots.
+2. Shuffle the list before running Quicksort.
+
+快速排序 (Quicksort)： 大多数快排实现需要 O(logN) 的额外空间（用于递归栈），许多人将其视为原地排序。
+然而，也有一些人对“原地排序”的定义非常严格，认为只能使用**常数级（Constant）**的额外空间。
