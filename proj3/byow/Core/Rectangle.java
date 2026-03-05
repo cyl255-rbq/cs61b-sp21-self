@@ -1,10 +1,5 @@
 package byow.Core;
 
-import byow.Core.WorldGenerator.Direction;
-
-import java.util.HashMap;
-import java.util.Map;
-
 public class Rectangle {
     private Positon p;
     private int width;
