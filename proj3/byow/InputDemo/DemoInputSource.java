@@ -11,7 +11,7 @@ public class DemoInputSource {
     private static final int STRING = 2;
 
     public static void main(String[] args) {
-        int inputType = KEYBOARD;
+        int inputType = Integer.parseInt(args[0].replaceAll("\\D+", ""));//提取Sting args[0]的第一个数字
 
         InputSource inputSource;
 

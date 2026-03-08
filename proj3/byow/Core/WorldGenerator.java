@@ -10,25 +10,31 @@ import static byow.Core.Engine.HEIGHT;
 import static byow.Core.Engine.WIDTH;
 
 public class WorldGenerator {
-    private int width;
-    private int height;
+
     private long seed;
     private Random random;
     private TETile[][] world;
     private ArrayList<Rectangle> alternative = new ArrayList<>();
     private boolean leftbound = false;
     private boolean rightbound = false;
+    private Position avatar = null;
 
-    WorldGenerator(int width, int height, long seed) {
-        this.width = width;
-        this.height = height;
+    WorldGenerator(long seed) {
         this.seed = seed;
         this.random = new Random(seed);
-        this.world = new TETile[width][height];
+        this.world = new TETile[WIDTH][HEIGHT];
     }
 
     private TETile[][] world() {
         return this.world;
+    }
+
+    public Position getAvatar() {
+        return this.avatar;
+    }
+
+    public void changeAvatar(Position p) {
+        this.avatar = p;
     }
 
     public void fillWithNothing(TETile[][] tiles) {
@@ -41,21 +47,21 @@ public class WorldGenerator {
         }
     }
 
-    private void drawRow(TETile[][] tiles, Positon p, TETile tile, int length) {
+    private void drawRow(TETile[][] tiles, Position p, TETile tile, int length) {
         int signum = Integer.signum(length);
         for (int i = 0; i < Math.abs(length); i += 1) {
             tiles[p.x() + signum * i][p.y()] = tile;
         }
     }
 
-    private void drawColumn(TETile[][] tiles, Positon p, TETile tile, int length) {
+    private void drawColumn(TETile[][] tiles, Position p, TETile tile, int length) {
         int signum = Integer.signum(length);
         for (int i = 0; i < Math.abs(length); i += 1) {
             tiles[p.x()][p.y() + signum * i] = tile;
         }
     }
 
-    private void fillWithFloor(TETile[][] tiles, Positon p, int width, int height) {
+    private void fillWithFloor(TETile[][] tiles, Position p, int width, int height) {
         int heightSign = Integer.signum(height);
         for (int i = 0; i < Math.abs(height); i += 1) {
             drawRow(tiles, p, Tileset.FLOOR, width);
@@ -63,14 +69,14 @@ public class WorldGenerator {
         }
     }
 
-    private boolean outEdges(Positon p, int width, int height) {
+    private boolean outEdges(Position p, int width, int height) {
         return ((p.x() + width > WIDTH - 1) || (p.x() + width < 0)) ||
                 ((p.y() + height > HEIGHT - 1) || (p.y() + height < 0)) ||
                 (p.x() == 0 || p.y() == 0) || (p.x() == WIDTH -1)
                 || (p.y() == HEIGHT-1);
     }
 
-    private boolean overlayInside(TETile[][] tiles, Positon p, int width, int height) {
+    private boolean overlayInside(TETile[][] tiles, Position p, int width, int height) {
         int x = p.x();
         int y = p.y();
         int widthSign = Integer.signum(width);
@@ -86,7 +92,7 @@ public class WorldGenerator {
     }
 
     private boolean inRoomRange(Rectangle room, int x, int y) {
-        Positon p = room.positon();
+        Position p = room.positon();
         int width = room.width();
         int height = room.height();
         int xRange = p.x() + width;
@@ -114,7 +120,7 @@ public class WorldGenerator {
         return xInRange && yInRange;
     }
 
-    private boolean overlayOutside(TETile[][] tiles, Positon p, Rectangle father, int width, int height) {
+    private boolean overlayOutside(TETile[][] tiles, Position p, Rectangle father, int width, int height) {
         int widthSign = Integer.signum(width);
         int heightSign = Integer.signum(height);
         p = p.shiftPosition(-widthSign, -heightSign);
@@ -141,12 +147,12 @@ public class WorldGenerator {
         return false;
     }
 
-    public boolean collision(TETile[][] tiles, Positon p, Rectangle father, int width, int height) {
+    public boolean collision(TETile[][] tiles, Position p, Rectangle father, int width, int height) {
         return outEdges(p, width, height) || overlayInside(tiles, p, width, height)
                 || overlayOutside(tiles, p, father, width, height);
     }
 
-    public void addRoomHelper(TETile[][] tiles, Positon p, int width, int height) {
+    public void addRoomHelper(TETile[][] tiles, Position p, int width, int height) {
         if (Math.abs(width) < 1 || Math.abs(height) < 1) {
             return;
         }
@@ -159,7 +165,7 @@ public class WorldGenerator {
         }
     }
 
-    public void addRoomAssist(TETile[][] tiles, Positon p, Rectangle room, int widthSign, int heightSign) {
+    public void addRoomAssist(TETile[][] tiles, Position p, Rectangle room, int widthSign, int heightSign) {
         int width = RandomUtils.uniform(random, 3, 6) * widthSign;
         int height = RandomUtils.uniform(random, 3, 6) * heightSign;
         if (collision(tiles, p, room, width, height)) {
@@ -169,7 +175,7 @@ public class WorldGenerator {
         alternative.add(new Rectangle(p, width, height));
     }
 
-    public void addHallwaysAssist(TETile[][] tiles, Positon p, Rectangle room, int lengthSign, int anotherSign) {
+    public void addHallwaysAssist(TETile[][] tiles, Position p, Rectangle room, int lengthSign, int anotherSign) {
         int anotherLen = RandomUtils.uniform(random, 1, 2) * anotherSign;
         int length = RandomUtils.uniform(random, 4, 6) * lengthSign;
         int width;
@@ -188,7 +194,7 @@ public class WorldGenerator {
         alternative.add(new Rectangle(p, width, height));
     }
 
-    public void addRectangle(TETile[][] tiles, Positon p,Rectangle room, int widthSign, int heightSign) {
+    public void addRectangle(TETile[][] tiles, Position p, Rectangle room, int widthSign, int heightSign) {
         if (RandomUtils.bernoulli(random)) {
             addRoomAssist(tiles, p, room, widthSign, heightSign);
         } else {
@@ -219,7 +225,7 @@ public class WorldGenerator {
     }
     
     private void addNeighbour(TETile[][] tiles, Rectangle room, Direction dir) {
-        Positon p = room.positon();
+        Position p = room.positon();
         int width = room.width();
         int height = room.height();
         int widthSign = Integer.signum(width);
@@ -263,7 +269,7 @@ public class WorldGenerator {
         }
     }
 
-    private boolean inRange(int width, int height) {
+    public static boolean inRange(int width, int height) {
         return width >= 0 && width < WIDTH
                 && height >=0 && height < HEIGHT;
     }
@@ -326,7 +332,7 @@ public class WorldGenerator {
         while (alternative.isEmpty()) {
             int x = RandomUtils.uniform(random, 1, WIDTH - 1);
             int y = RandomUtils.uniform(random, 1, HEIGHT - 1);
-            Positon p = new Positon(x, y);
+            Position p = new Position(x, y);
             if (!outEdges(p, width, height)) {
                 addRoomHelper(tiles, p, width, height);
                 alternative.add(new Rectangle(p, width, height));
@@ -335,23 +341,31 @@ public class WorldGenerator {
         }
     }
 
+    private void pickAvatar(TETile[][] world) {
+        while (avatar == null) {
+            int x = RandomUtils.uniform(random, 1, WIDTH - 1);
+            int y = RandomUtils.uniform(random, 1, HEIGHT - 1);
+            if (world[x][y] == Tileset.FLOOR) {
+                world[x][y] = Tileset.AVATAR;
+                this.avatar = new Position(x, y);
+            }
+        }
+    }
+
     public TETile[][] generate() {
-        WorldGenerator generator = new WorldGenerator(WIDTH, HEIGHT, seed);
-        TETile[][] world = generator.world;
-        fillWithNothing(world);
-        addStart(world);
-        generate(world);
-        fillWall(world);
-        System.out.println(TETile.toString(world));
-        return world;
+        fillWithNothing(this.world);
+        addStart(this.world);
+        generate(this.world);
+        fillWall(this.world);
+        pickAvatar(this.world);
+        return this.world;
     }
 
 
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
-        WorldGenerator a = new WorldGenerator(80,30,16322323);
-        TETile[][] world = a.generate();
-        ter.renderFrame(world);
+        Interactivity b = new Interactivity(ter);
+        b.checkMouse();
     }
 }

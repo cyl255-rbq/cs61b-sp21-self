@@ -1,0 +1,20 @@
+private Interactivity getInteractivity(String input) {
+    this.generator = new WorldGenerator(seed);
+    this.generator.generate(); // 假设你补上了这一行
+
+    // 防御性检查：确保 generate() 真的把 avatar 弄出来了
+    Objects.requireNonNull(this.generator.getAvatar(), "生成失败：generate 跑完了但没放小人！");
+    
+    return new Interactivity(ter, this.getGenerator());
+}
+
+
+    public TETile[][] generate() {
+        fillWithNothing(this.world);
+        addStart(this.world);
+        generate(this.world);
+        fillWall(this.world);
+        pickAvatar(this.world);
+        return this.world;
+    }
+在报错的地方，比如上面两个地方加上，检测avatar是不是null
