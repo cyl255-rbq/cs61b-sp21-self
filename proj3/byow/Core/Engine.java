@@ -15,7 +15,7 @@ public class Engine {
     public static final int HEIGHT = 30;
     public static final int KEYBOARD = 0;
     public static final int STRING = 1;
-    public TETile[][] world;
+    private TETile[][] world;
     private WorldGenerator generator;
 
     /**

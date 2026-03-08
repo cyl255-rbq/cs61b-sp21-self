@@ -310,7 +310,7 @@ public class Interactivity {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
         Engine engine = new Engine();
-        engine.interactWithInputString("ladds");
-        ter.renderFrame(engine.world);
+        TETile[][] world =  engine.interactWithInputString("ladds");
+        ter.renderFrame(world);
     }
 }
