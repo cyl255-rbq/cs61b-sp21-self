@@ -17,7 +17,6 @@ public class Engine {
     public static final int STRING = 1;
     public TETile[][] world;
     private WorldGenerator generator;
-    private String input;
 
     /**
      * Method used for exploring a fre
@@ -64,19 +63,18 @@ public class Engine {
 
         //WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
         Interactivity interactivity = getInteractivity(newInput);
-        TETile[][] newWorld = interactivity.getWorld();
-        if (this.input != null) {
-            newInput = this.input;
-        }
-        newInput = newInput.substring(Math.max(newInput.indexOf('S'), newInput.indexOf('s')) + 1);
+        String fullInput = interactivity.getKeysTyped();
+        int sIndex = Math.max(fullInput.indexOf('S'), fullInput.indexOf('s'));
+        String commands = fullInput.substring(sIndex + 1);
+        interactivity.setKeysTyped(fullInput.substring(0, sIndex + 1));
         int index = 0;
-        while (index < newInput.length() && !interactivity.isGameOver()) {
-            char now = interactivity.getMoveNextKey(newInput, index);
+        while (index < commands.length() && !interactivity.isGameOver()) {
+            char now = commands.charAt(index);
+            interactivity.moveAvatarString(now);
             index += 1;
-            newWorld = interactivity.moveAvatarString(now);
         }
-        this.world = newWorld;
-        return newWorld;
+        this.world = interactivity.getWorld();
+        return this.world;
     }
 
     public WorldGenerator getGenerator() {
@@ -84,31 +82,25 @@ public class Engine {
     }
 
     private Interactivity getInteractivity(String newInput) {
-        if (newInput == null || newInput.isEmpty()) {
-            throw new IllegalArgumentException("输入不能为空");
-        } else if (newInput.charAt(0) == 'L' || newInput.charAt(0) == 'l') {
+        String finalInput = newInput;
+        if (newInput.toUpperCase().startsWith("L")) {
             File cwd = new File(System.getProperty("user.dir"));
             File save = join(cwd, "savefile.txt");
             if (!save.exists()) {
-                throw new IllegalArgumentException("没有旧存档，无法加载");
+                throw new IllegalArgumentException("没有旧存档");
             }
-            newInput = readContentsAsString(save) + newInput.substring(1);
-            this.input = newInput;
-        } else if (newInput.charAt(0) != 'N' && newInput.charAt(0) != 'n') {
-            throw new IllegalArgumentException("第一个字符必须是 'N' 或 'n'");
+            String historical = readContentsAsString(save).replaceAll("(?i):q", "");
+            finalInput = historical + newInput.substring(1);
         }
-        int end = Math.max(newInput.indexOf('S'), newInput.indexOf('s'));
-        if (end == -1) {
-            throw new IllegalArgumentException("没有结束符号");
-        }
-        String seedStr = newInput.substring(1, end).replaceAll("[^0-9]", "");
+        int end = Math.max(finalInput.indexOf('S'), finalInput.indexOf('s'));
+        String seedStr = finalInput.substring(1, end).replaceAll("[^0-9]", "");
         long seed = Long.parseLong(seedStr);
         this.generator = new WorldGenerator(seed);
         TETile[][] initialWorld = this.generator.generate();
         Interactivity interactivity = new Interactivity(ter, this.getGenerator());
         interactivity.setSeed(seedStr);
         interactivity.setWorld(initialWorld);
-        interactivity.setKeysTyped("n" + seed + "s" + input);
+        interactivity.setKeysTyped(finalInput);
         return interactivity;
     }
 

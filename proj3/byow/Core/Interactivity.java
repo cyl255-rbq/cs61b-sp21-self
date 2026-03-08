@@ -36,6 +36,10 @@ public class Interactivity {
         this.generator = generator;
     }
 
+    String getKeysTyped() {
+        return this.keysTyped;
+    }
+
     void setKeysTyped(String keysTyped) {
         this.keysTyped = keysTyped;
     }
@@ -306,7 +310,7 @@ public class Interactivity {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
         Engine engine = new Engine();
-        engine.interactWithInputString("lwasaasswadada:q");
+        engine.interactWithInputString("ladds");
         ter.renderFrame(engine.world);
     }
 }
