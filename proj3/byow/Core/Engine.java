@@ -85,7 +85,8 @@ public class Engine {
         String fullString = newInput;
         if (newInput.toUpperCase().startsWith("L")) {
             File save = join(new File(System.getProperty("user.dir")), "savefile.txt");
-            fullString = readContentsAsString(save).replaceAll("(?i):q", "") + newInput.substring(1);
+            fullString = readContentsAsString(save).replaceAll("(?i):q", "")
+                    + newInput.substring(1);
         }
         int end = Math.max(fullString.indexOf('S'), fullString.indexOf('s'));
         String seedStr = fullString.substring(1, end).replaceAll("[^0-9]", "");
