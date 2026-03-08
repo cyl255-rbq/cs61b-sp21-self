@@ -7,6 +7,7 @@ import edu.princeton.cs.introcs.StdDraw;
 
 import java.awt.*;
 import java.io.File;
+import java.math.BigInteger;
 import java.util.Set;
 
 import static byow.Core.Engine.*;
@@ -279,7 +280,12 @@ public class Interactivity {
     }
 
     private boolean checkSeedValid() {
-        return !seed.isEmpty() && seed.length() < 19;
+        if (seed.isEmpty()) {
+            return false;
+        }
+        BigInteger seedValue = new BigInteger(seed);
+        BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
+        return maxLong.compareTo(seedValue) >= 0;
     }
 
     public void startGame() {
