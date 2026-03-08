@@ -17,6 +17,7 @@ public class Engine {
     public static final int STRING = 1;
     private TETile[][] world;
     private WorldGenerator generator;
+    private String input;
 
     /**
      * Method used for exploring a fre
@@ -63,10 +64,9 @@ public class Engine {
 
         //WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
         Interactivity interactivity = getInteractivity(newInput);
-        String fullInput = interactivity.getKeysTyped();
+        String fullInput = this.input;
         int sIndex = Math.max(fullInput.indexOf('S'), fullInput.indexOf('s'));
         String commands = fullInput.substring(sIndex + 1);
-        interactivity.setKeysTyped(fullInput.substring(0, sIndex + 1));
         int index = 0;
         while (index < commands.length() && !interactivity.isGameOver()) {
             char now = commands.charAt(index);
@@ -82,25 +82,20 @@ public class Engine {
     }
 
     private Interactivity getInteractivity(String newInput) {
-        String finalInput = newInput;
+        String fullString = newInput;
         if (newInput.toUpperCase().startsWith("L")) {
-            File cwd = new File(System.getProperty("user.dir"));
-            File save = join(cwd, "savefile.txt");
-            if (!save.exists()) {
-                throw new IllegalArgumentException("没有旧存档");
-            }
-            String historical = readContentsAsString(save).replaceAll("(?i):q", "");
-            finalInput = historical + newInput.substring(1);
+            File save = join(new File(System.getProperty("user.dir")), "savefile.txt");
+            fullString = readContentsAsString(save).replaceAll("(?i):q", "") + newInput.substring(1);
         }
-        int end = Math.max(finalInput.indexOf('S'), finalInput.indexOf('s'));
-        String seedStr = finalInput.substring(1, end).replaceAll("[^0-9]", "");
+        int end = Math.max(fullString.indexOf('S'), fullString.indexOf('s'));
+        String seedStr = fullString.substring(1, end).replaceAll("[^0-9]", "");
         long seed = Long.parseLong(seedStr);
         this.generator = new WorldGenerator(seed);
-        TETile[][] initialWorld = this.generator.generate();
         Interactivity interactivity = new Interactivity(ter, this.getGenerator());
         interactivity.setSeed(seedStr);
-        interactivity.setWorld(initialWorld);
-        interactivity.setKeysTyped(finalInput);
+        interactivity.setWorld(this.getGenerator().generate());
+        interactivity.setKeysTyped("n" + seedStr + "s");
+        this.input = fullString;
         return interactivity;
     }
 

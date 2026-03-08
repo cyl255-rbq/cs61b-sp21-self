@@ -36,10 +36,6 @@ public class Interactivity {
         this.generator = generator;
     }
 
-    String getKeysTyped() {
-        return this.keysTyped;
-    }
-
     void setKeysTyped(String keysTyped) {
         this.keysTyped = keysTyped;
     }
@@ -153,11 +149,6 @@ public class Interactivity {
             char nextKeyTyped = StdDraw.nextKeyTyped();
             moveHelper(nextKeyTyped, KEYBOARD);
         }
-    }
-
-    public char getMoveNextKey(String input, int index) {
-        char returnChar = input.charAt(index);
-        return returnChar;
     }
 
     public TETile[][] moveAvatarString(char input) {
