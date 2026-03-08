@@ -86,7 +86,7 @@ public class Interactivity {
             case 's', 'S' -> target = avatar.shiftPosition(0, -1);
             case 'a', 'A' -> target = avatar.shiftPosition(-1, 0);
             case 'd', 'D' -> target = avatar.shiftPosition(1, 0);
-            case 'Q' -> {
+            case 'q', 'Q' -> {
                 if (keysTyped.charAt(keysTyped.length() - 1) == ':') {
                     gameOver = true;
                     keysTyped = keysTyped.substring(0, keysTyped.length() - 1);
