@@ -1,0 +1,7 @@
+java不允许创建泛型数组，因为泛型在编译时会被类型擦除，运行时无法获知具体的类型参数。
+例如，List<String> 和 List<Integer> 在运行时都是 List 类型。这意味着泛型类在运行时失去了类型参数信息。
+如new T[] 或 new List<String>[10]
+
+只可以items = (T) new Object[100]这样
+泛化就是在类的后面比如public class Alist<T> {
+然后构建的东西的类型选择T

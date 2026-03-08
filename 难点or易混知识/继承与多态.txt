@@ -1,3 +1,10 @@
+第一个 Animal a = new Dog(); 是正确的，第二个 Dog a = new Animal(); 是错误的。
+非常简单的理解，a = new Dog()，a实质是一个狗，给a赋Animal的类，这样是对的，因为狗确实是Animal，相当于Animal a(Dog)，而后者就相反了
+new xxx代表，变量指定的对象是什么，而前缀类是你赋给变量的，比如Set<,,,> a = new HashSet<>();，a是一个HashSet，它属于Set
+我想创建个Set a，a创建为HashSet，而不能说我想创建个HashSet，而他是Set，因为Set不止可以用Hash实现
+符合写代码的逻辑，比如我想创建个Set，我先写Set a，然后具体Set怎么实现：= new HashSet
+
+
 1. 继承的基础
     Original: VengefulSLList extends SLList means a VengefulSLList is-an SLList. Inherits all members! Variables, methods, nested classes.
     翻译： VengefulSLList extends SLList 意味着 VengefulSLList 是一个 SLList（是一个关系）。它继承了所有的成员！包括变量、方法和嵌套类。
