@@ -33,7 +33,7 @@ public class Engine {
 
 
     /**
-     * Method used for autograding and testing your code. The input string will be a series
+     * Method used for autograding and testing your code. The newInput string will be a series
      * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww". The engine should
      * behave exactly as if the user typed these characters into the engine using
      * interactWithKeyboard.
@@ -50,56 +50,58 @@ public class Engine {
      * should yield the exact same world state as:
      * - interactWithInputString("n123sssww")
      *
-     * @param input the input string to feed to your program
+     * @param newInput the newInput string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
 
-    public TETile[][] interactWithInputString(String input) {
-        // TODO: Fill out this method so that it run the engine using the input
+    public TETile[][] interactWithInputString(String newInput) {
         // passed in as an argument, and return a 2D tile representation of the
-        // world that would have been drawn if the same inputs had been given
+        // newWorld that would have been drawn if the same inputs had been given
         // to interactWithKeyboard().
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different input types.
+        // that works for many different newInput types.
 
-        //WorldGenerator world = new WorldGenerator(WIDTH, HEIGHT, input);
-        Interactivity interactivity = getInteractivity(input);
-        TETile[][] world = interactivity.getWorld();
+        //WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
+        Interactivity interactivity = getInteractivity(newInput);
+        TETile[][] newWorld = interactivity.getWorld();
         if (this.input != null) {
-            input = this.input;
+            newInput = this.input;
         }
-        input = input.substring(Math.max(input.indexOf('S'), input.indexOf('s')) + 1);
+        newInput = newInput.substring(Math.max(newInput.indexOf('S'), newInput.indexOf('s')) + 1);
         int index = 0;
-        while (index < input.length() && !interactivity.isGameOver()) {
-            char now = interactivity.getMoveNextKey(input, index);
+        while (index < newInput.length() && !interactivity.isGameOver()) {
+            char now = interactivity.getMoveNextKey(newInput, index);
             index += 1;
-            world = interactivity.moveAvatarString(now);
+            newWorld = interactivity.moveAvatarString(now);
         }
-        this.world = world;
-        return world;
+        this.world = newWorld;
+        return newWorld;
     }
 
     public WorldGenerator getGenerator() {
         return this.generator;
     }
 
-    private Interactivity getInteractivity(String input) {
-        if (input == null || input.isEmpty()) {
+    private Interactivity getInteractivity(String newInput) {
+        if (newInput == null || newInput.isEmpty()) {
             throw new IllegalArgumentException("输入不能为空");
-        } else if (input.charAt(0) == 'L' || input.charAt(0) == 'l') {
-            File CWD = new File(System.getProperty("user.dir"));
-            File save = join(CWD, "savefile.txt");
-            input = readContentsAsString(save) + input.substring(1);
-            this.input = input;
-        } else if (input.charAt(0) != 'N' && input.charAt(0) != 'n') {
+        } else if (newInput.charAt(0) == 'L' || newInput.charAt(0) == 'l') {
+            File cwd = new File(System.getProperty("user.dir"));
+            File save = join(cwd, "savefile.txt");
+            if (!save.exists()) {
+                throw new IllegalArgumentException("没有旧存档，无法加载");
+            }
+            newInput = readContentsAsString(save) + newInput.substring(1);
+            this.input = newInput;
+        } else if (newInput.charAt(0) != 'N' && newInput.charAt(0) != 'n') {
             throw new IllegalArgumentException("第一个字符必须是 'N' 或 'n'");
         }
-        int end = Math.max(input.indexOf('S'), input.indexOf('s'));
+        int end = Math.max(newInput.indexOf('S'), newInput.indexOf('s'));
         if (end == -1) {
             throw new IllegalArgumentException("没有结束符号");
         }
-        String seedStr = input.substring(1, end).replaceAll("[^0-9]", "");
+        String seedStr = newInput.substring(1, end).replaceAll("[^0-9]", "");
         long seed = Long.parseLong(seedStr);
         this.generator = new WorldGenerator(seed);
         TETile[][] initialWorld = this.generator.generate();

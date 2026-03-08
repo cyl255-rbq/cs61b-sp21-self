@@ -17,8 +17,8 @@ public class Position {
         return this.y;
     }
 
-    public Position shiftPosition(int x, int y) {
-        return new Position(this.x + x, this.y + y);
+    public Position shiftPosition(int xCoord, int yCoord) {
+        return new Position(this.x + xCoord, this.y + yCoord);
     }
 
 //public record Positon(int x, int y) {
