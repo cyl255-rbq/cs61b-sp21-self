@@ -36,11 +36,15 @@ public class Interactivity {
         this.generator = generator;
     }
 
-    public void setSeed(String seed) {
+    void setKeysTyped(String keysTyped) {
+        this.keysTyped = keysTyped;
+    }
+
+    void setSeed(String seed) {
         this.seed = seed;
     }
 
-    public void setWorld(TETile[][] world) {
+    void setWorld(TETile[][] world) {
         this.world = world;
     }
 
@@ -301,8 +305,8 @@ public class Interactivity {
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
-        Interactivity b = new Interactivity(ter);
-        b.runGameLoop();
-
+        Engine engine = new Engine();
+        engine.interactWithInputString("lwasaasswadada:q");
+        ter.renderFrame(engine.world);
     }
 }

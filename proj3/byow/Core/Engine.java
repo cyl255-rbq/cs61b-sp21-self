@@ -15,7 +15,7 @@ public class Engine {
     public static final int HEIGHT = 30;
     public static final int KEYBOARD = 0;
     public static final int STRING = 1;
-    private TETile[][] world;
+    public TETile[][] world;
     private WorldGenerator generator;
     private String input;
 
@@ -108,6 +108,7 @@ public class Engine {
         Interactivity interactivity = new Interactivity(ter, this.getGenerator());
         interactivity.setSeed(seedStr);
         interactivity.setWorld(initialWorld);
+        interactivity.setKeysTyped("n" + seed + "s" + input);
         return interactivity;
     }
 
@@ -121,10 +122,6 @@ public class Engine {
 //        System.out.println("LW".substring(1));
         Engine engine = new Engine();
         engine.ter.initialize(WIDTH, HEIGHT);
-        TETile[][] world =  engine.interactWithInputString("LAAAAAAAAA:Q");
-        System.out.println(engine.input);
-        //todo :Q推出后，我读取L，此时会在原地动
-        engine.ter.renderFrame(world);
     }
 
 }
