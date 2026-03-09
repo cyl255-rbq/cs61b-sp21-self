@@ -25,7 +25,11 @@ public class WorldGenerator {
         this.world = new TETile[WIDTH][HEIGHT];
     }
 
-    private TETile[][] world() {
+    Position getAvatarPosition() {
+        return this.avatar;
+    }
+
+    public TETile[][] world() {
         return this.world;
     }
 
@@ -366,6 +370,6 @@ public class WorldGenerator {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
         Interactivity b = new Interactivity(ter);
-        b.checkMouse();
+
     }
 }

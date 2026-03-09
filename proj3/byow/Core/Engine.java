@@ -2,9 +2,7 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
-
 import java.io.File;
-
 import static byow.Core.Utils.join;
 import static byow.Core.Utils.readContentsAsString;
 
@@ -19,6 +17,7 @@ public class Engine {
     private WorldGenerator generator;
     private String input;
 
+
     /**
      * Method used for exploring a fre
      * sh world. This method should handle all inputs,
@@ -29,8 +28,6 @@ public class Engine {
         Interactivity interactivity = new Interactivity(ter);
         interactivity.runGameLoop();
     }
-
-
 
     /**
      * Method used for autograding and testing your code. The newInput string will be a series
@@ -53,16 +50,14 @@ public class Engine {
      * @param newInput the newInput string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
-
     public TETile[][] interactWithInputString(String newInput) {
-        // passed in as an argument, and return a 2D tile representation of the
-        // newWorld that would have been drawn if the same inputs had been given
-        // to interactWithKeyboard().
-        //
-        // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different newInput types.
-
-        //WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
+// passed in as an argument, and return a 2D tile representation of the
+// newWorld that would have been drawn if the same inputs had been given
+// to interactWithKeyboard().
+//
+// See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
+// that works for many different newInput types.
+//WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
         Interactivity interactivity = getInteractivity(newInput);
         String fullInput = this.input;
         int sIndex = Math.max(fullInput.indexOf('S'), fullInput.indexOf('s'));
@@ -105,11 +100,9 @@ public class Engine {
         return TETile.toString(world);
     }
 
-
     public static void main(String[] args) {
 //        System.out.println("LW".substring(1));
         Engine engine = new Engine();
         engine.ter.initialize(WIDTH, HEIGHT);
     }
-
 }

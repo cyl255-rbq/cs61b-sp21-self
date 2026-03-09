@@ -1,0 +1,12 @@
+思路，随机选一个点，然后往四周扩散生成矩形
+0 1这两个情况，如果!=null，随机让他选一个然后生成这固定数量的邻居，生成方向在上下左右随机
+你可以硬性规定“先生成 20 个房间，不成功就一直试”，保证了地图的“茂盛度”。
+你生成一个房间或走廊时，找出它四周所有可以进一步扩展的坐标（比如墙壁的中点），把它们放进一个 List<Point> 或 Queue 中。
+改进逻辑： 设定一个目标（比如：世界必须至少包含 15 个房间）。只要房间总数还没达到目标，
+就不断从这个 List 中随机抽取一个点作为起点，尝试向外延伸。
+好处： 即使某次 50% 的随机选择失败了，你依然可以从之前的“备选库”里找点继续生长，直到填满空间为止。
+
+点在左下：上p.y+height  (height +) 下 p.y (height -) 左p.x(width -) 右p.x+width(width +)
+点在右下:  上p.y+height (height +) 下 p.y(height -)左p.x +width (width - ) 右 p.x(width +)
+点在左上：上p.y (height +) 下p.y+height (height - )左p.x(width -) 右p.x + width(width +)
+点在右上：上p.y (height +) 下p.y +height (height -)左p.x +width(width -) 右 p.x(width +)

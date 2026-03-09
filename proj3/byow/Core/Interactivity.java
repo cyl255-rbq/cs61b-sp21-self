@@ -4,29 +4,29 @@ import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 import edu.princeton.cs.introcs.StdDraw;
-
 import java.awt.*;
 import java.io.File;
 import java.math.BigInteger;
 import java.util.Set;
-
 import static byow.Core.Engine.*;
 import static byow.Core.Utils.*;
 
-
-
 public class Interactivity {
     private static final int TILE_SIZE = 16;
-    private boolean gameOver = false;
-    private TETile before = null;
+    private static final int MAX_SIGHT = 3;
+    private static final int MIN_SIGHT = 7;
+    private int nowSight = 5;
+    private boolean sightMode = true;
     private TERenderer ter;
     private TETile[][] world;
+    private TETile currentHoverTile = null;
     private WorldGenerator generator;
     private String keysTyped = "";
     private String seed = "";
     private GameState currentState = GameState.MENU;
     private static final Set<Character> NUMBERS =
             Set.of('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+
     public Interactivity(TERenderer ter) {
         this.ter = ter;
     }
@@ -49,7 +49,7 @@ public class Interactivity {
     }
 
     public boolean isGameOver() {
-        return this.gameOver;
+        return currentState == GameState.QUIT;
     }
 
     public TETile[][] getWorld() {
@@ -57,11 +57,9 @@ public class Interactivity {
     }
 
     public void showTileMessage(TETile tile) {
-        ter.renderFrame(world);
         StdDraw.setPenColor(Color.WHITE);
         StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE));
         StdDraw.textLeft(1, HEIGHT - 0.5, tile.description());
-        StdDraw.show();
         StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE - 2));
     }
 
@@ -74,26 +72,25 @@ public class Interactivity {
         return null;
     }
 
-
     public void checkMouse() {
-        TETile now = mouseTETile();
-        if (now != null && !now.equals(before)) {
-            showTileMessage(now);
-            before = now;
+        this.currentHoverTile = mouseTETile();
+        if (currentHoverTile != null) {
+            showTileMessage(currentHoverTile);
         }
     }
 
     private void moveHelper(char nextKeyTyped, int way) {
         Position avatar = generator.getAvatar();
-        Position target;
+        Position target = avatar;
         switch (nextKeyTyped) {
             case 'w', 'W' -> target = avatar.shiftPosition(0, 1);
             case 's', 'S' -> target = avatar.shiftPosition(0, -1);
             case 'a', 'A' -> target = avatar.shiftPosition(-1, 0);
             case 'd', 'D' -> target = avatar.shiftPosition(1, 0);
+            case 't', 'T' -> sightMode = !sightMode;
             case 'q', 'Q' -> {
                 if (keysTyped.charAt(keysTyped.length() - 1) == ':') {
-                    gameOver = true;
+                    currentState = GameState.QUIT;
                     keysTyped = keysTyped.substring(0, keysTyped.length() - 1);
                     saveGame();
                 }
@@ -105,7 +102,7 @@ public class Interactivity {
             }
         }
         keysTyped += nextKeyTyped;
-        if (WorldGenerator.inRange(target.x(), target.y()) && canChangeAvatar(target)) {
+        if (WorldGenerator.inRange(target.x(), target.y()) && canChangeAvatar(target) && target != avatar) {
             changeAvatarTEtile(target, way);
         }
     }
@@ -122,6 +119,15 @@ public class Interactivity {
         writeContents(save, total);
     }
 
+    public void applyCommands(String commands) {
+        int index = 0;
+        while (index < commands.length() && currentState != GameState.QUIT) {
+            char now = commands.charAt(index);
+            this.moveHelper(now, Engine.STRING); // 这里的 this 保证了改的是当前对象的 sightMode
+            index += 1;
+        }
+    }
+
     public void loadGame() {
         File CWD = new File(System.getProperty("user.dir"));
         File save = join(CWD, "savefile.txt");
@@ -135,13 +141,14 @@ public class Interactivity {
             return;
         }
         String load = readContentsAsString(save);
-        this.keysTyped = load;
         int end = Math.max(load.indexOf('S'), load.indexOf('s'));
         this.seed = load.substring(1, end).replaceAll("[^0-9]", "");
-        Engine temp = new Engine();
-        this.world = temp.interactWithInputString(load);
-        this.generator = temp.getGenerator();
-        currentState = GameState.PLAYING;
+        this.generator = new WorldGenerator(Long.parseLong(this.seed));
+        this.world = this.generator.generate();
+        this.keysTyped = "n" + this.seed + "s";
+        String commands = load.substring(end + 1);
+        this.applyCommands(commands);
+        this.currentState = GameState.PLAYING;
     }
 
     public void moveAvatarKeyboard() {
@@ -164,13 +171,6 @@ public class Interactivity {
         world[targetX][targetY] = Tileset.AVATAR;
         world[avatar.x()][avatar.y()] = target;
         generator.changeAvatar(p);
-        if (way == Engine.KEYBOARD) {
-            TETile mouseNow = mouseTETile();
-            ter.renderFrame(world);
-            if (mouseNow != null) {
-                showTileMessage(mouseNow);
-            }
-        }
     }
 
     private boolean canChangeAvatar(Position p) {
@@ -179,7 +179,6 @@ public class Interactivity {
     }
 
     public enum GameState { MENU, SEED_INPUT, PLAYING, QUIT, LOAD }
-
     private void clearBuffer() {
         while (StdDraw.hasNextKeyTyped()) {
             StdDraw.nextKeyTyped();
@@ -288,20 +287,75 @@ public class Interactivity {
     }
 
     public void startGame() {
-        StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE - 2));
-        ter.renderFrame(world);
-        while (!gameOver) {
+        while (currentState != GameState.QUIT) {
+//          System.out.println("x:" + generator.getAvatarPosition().x()  + "y:" +generator.getAvatarPosition().y());
             moveAvatarKeyboard();
-            checkMouse();
+//          2. 开始这一帧的绘制
+            if (sightMode) {
+                drawSigntMode();// 盖上阴影（在缓冲区）
+            } else {
+                drawTilesOnly();// 画地图（在缓冲区）
+            }
+            checkMouse();     // 画 HUD 文字（在缓冲区）
+            StdDraw.show();
             StdDraw.pause(10);
+        }
+    }
+
+    private void drawSigntMode() {
+        Position p = generator.getAvatar();
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+// 计算当前格子 (x, y) 到小人 (p.x, p.y) 的欧几里得距离
+                double dist = Math.sqrt(Math.pow(x - p.x(), 2) + Math.pow(y - p.y(), 2));
+                if (dist < nowSight) {
+                    world[x][y].draw(x, y);
+                } else {
+                    Tileset.NOTHING.draw(x, y);
+                }
+            }
+        }
+    }
+
+    private void drawTilesOnly() {
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+                if (world[x][y] == null) {
+                    continue;
+                }
+// 每一个 Tile 都有自己的 draw 方法
+                world[x][y].draw(x, y);
+            }
         }
     }
 
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
-        Engine engine = new Engine();
-        TETile[][] world =  engine.interactWithInputString("ladds");
-        ter.renderFrame(world);
+        StdDraw.setPenColor(Color.yellow);
+        Interactivity temp = new Interactivity(ter);
+        Position p = new Position(40,15);
+//todo Math.min(p.x() + temp.nowSight, HEIGHT);
+        double[] x = { p.x() - temp.nowSight, p.x(), p.x() + temp.nowSight, p.x() };
+        double[] y = {p.y(), p.y() + temp.nowSight, p.y(), p.y() - temp.nowSight };
+//左上右下
+//StdDraw.filledPolygon(x, y);
+        StdDraw.setPenColor(Color.WHITE);
+        double[] xLeftUp = {0, 0, p.x(), p.x(), p.x() - temp.nowSight};
+        double[] yLeftUp = {p.y(), HEIGHT, HEIGHT, p.y() + temp.nowSight, p.y()};
+        StdDraw.filledPolygon(xLeftUp, yLeftUp);
+        double[] xRightUp = {p.x(), p.x(), WIDTH, WIDTH, p.x() + temp.nowSight};
+        double[] yRightUp = {p.y() + temp.nowSight, HEIGHT, HEIGHT, p.y(), p.y()};
+        StdDraw.filledPolygon(xRightUp, yRightUp);
+        double[] xLeftDown = {0, 0, p.x() - temp.nowSight, p.x(), p.x()};
+        double[] yLeftDown = {0, p.y(), p.y(), p.y() - temp.nowSight, 0};
+        StdDraw.filledPolygon(xLeftDown, yLeftDown);
+        double[] xRightDown = {p.x(), p.x(), p.x() + temp.nowSight, WIDTH, WIDTH};
+        double[] yRightDown = {0, p.y() - temp.nowSight, p.y(), p.y(), 0};
+        StdDraw.filledPolygon(xRightDown, yRightDown);
+        StdDraw.show();
+//        Engine engine = new Engine();
+//        TETile[][] world =  engine.interactWithInputString("ladds");
+//        ter.renderFrame(world);
     }
 }
