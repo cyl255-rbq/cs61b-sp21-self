@@ -16,6 +16,7 @@ import static byow.Core.Utils.*;
 import static byow.Core.WorldGenerator.couldBeNeighbour;
 
 public class Interactivity {
+    private final double ZOOM = 0.8;
     private static final int TILE_SIZE = 16;
     private static final int MAX_SIGHT = 10;
     private static final int MIN_SIGHT = 5;
@@ -24,7 +25,6 @@ public class Interactivity {
     private int nowSight = 5;
     private boolean sightMode = true;
     private boolean showEnemyPath = false;
-    private boolean allowShowEnemyPath = true;
     private boolean savingGame = false;
     private TETile[][] world;
     private TETile currentMouseTile = null;
@@ -120,7 +120,7 @@ public class Interactivity {
                 lastKey = 't';
             }
             case 'e', 'E' -> {
-                allowShowEnemyPath = !allowShowEnemyPath;
+                showEnemyPath = !showEnemyPath;
                 lastKey = 'e';
             }
             case 'v', 'V' -> {
@@ -189,7 +189,6 @@ public class Interactivity {
         this.totalTicks = 0;
         this.enemies.clear();
         this.showEnemyPath = false;
-        this.allowShowEnemyPath = true;
         this.savingGame = false;
         this.sightMode = true;
         this.currentMouseTile = null;
@@ -328,7 +327,7 @@ public class Interactivity {
             StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "Well done, you won!");
         } else if (state.equals("LOSE")) {
             StdDraw.setPenColor(Color.RED);
-            StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "Sorry, you lose T T");
+            StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "Try again, you lose.");
         } else if (state.equals("SAVE")) {
             StdDraw.setPenColor(Color.white);
             StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "Saved successfully");
@@ -504,15 +503,20 @@ public class Interactivity {
     }
 
     private void drawEnemyPath() {
-        if (allowShowEnemyPath) {
-            temporaryShowPath();
-            if (showEnemyPath) {
-                for (Enemy enemy : enemies) {
-                    StdDraw.setPenColor(Color.green);
-                    for (Position p : enemy.path()) {
-                        if (!p.equals(generator.getAvatar()) && !p.equals(enemy.position())) {
+        temporaryShowPath();
+        if (showEnemyPath) {
+            for (Enemy enemy : enemies) {
+                StdDraw.setPenColor(Color.green);
+                for (Position p : enemy.path()) {
+                    if (!p.equals(generator.getAvatar()) && !p.equals(enemy.position())) {
+                        if (currentView == ViewMode.TOP_DOWN) {
                             StdDraw.filledCircle(p.x() + 0.5, p.y() + 0.5, 0.15);
+                        } else {
+                            double screenX = getIsoX(p.x(), p.y());
+                            double screenY = getIsoY(p.x(), p.y());
+                            StdDraw.filledEllipse(screenX, screenY, 0.2, 0.1);
                         }
+
                     }
                 }
             }
@@ -525,35 +529,37 @@ public class Interactivity {
         }
     }
 
-    private void drawTopDown() {
-        StdDraw.clear(Color.BLACK);
-        StdDraw.setXscale(0, WIDTH);
-        StdDraw.setYscale(0, HEIGHT);
-        this.allowShowEnemyPath = true;
-        if (sightMode) {
-            drawSigntMode();// 盖上阴影（在缓冲区）
-        } else {
-            drawTilesOnly();// 画地图（在缓冲区）
-        }
-    }
-
     private void drawWorld() {
         switch (currentView) {
-            case TOP_DOWN -> drawTopDown();
-            case ISOMETRIC -> drawIsometric();
+            case TOP_DOWN -> drawTopDownWorld();
+            case ISOMETRIC -> drawIsometricWorld();
         }
     }
 
-    private void drawIsometric() {
-        this.allowShowEnemyPath = false;
+    private double getIsoX(int x, int y) {
+        return (x - y) * ZOOM - (double) WIDTH / 6;
+    }
+
+    private double getIsoY(int x, int y) {
+        return (x + y) * ZOOM / 2 - (double) HEIGHT * 3 / 5;
+    }
+
+    private void drawIsometricWorld() {
         StdDraw.clear(Color.BLACK);
-        double zoom = 0.8;
-        StdDraw.setXscale(-WIDTH * zoom, WIDTH * zoom);
-        StdDraw.setYscale(-HEIGHT * zoom, HEIGHT * zoom);
+        StdDraw.setXscale(-WIDTH * ZOOM, WIDTH * ZOOM);
+        StdDraw.setYscale(-HEIGHT * ZOOM, HEIGHT * ZOOM);
         for (int x = 0; x < WIDTH; x += 1) {
             for (int y = HEIGHT - 1; y >= 0; y -= 1) {
-                double screenX = (x - y) * zoom - (double) WIDTH / 6;
-                double screenY = (x + y) * zoom / 2 - (double) HEIGHT * 3 / 5;
+                double screenX = getIsoX(x, y);
+                double screenY = getIsoY(x, y);
+                if (sightMode) {
+                    Position avatar = generator.getAvatar();
+                    double dist = Math.sqrt(Math.pow(x - avatar.x(), 2) + Math.pow(y - avatar.y(), 2));
+                    if (dist >= nowSight) {
+                        Tileset.NOTHING.draw(screenX, screenY);
+                        continue;
+                    }
+                }
                 TETile tile = world[x][y];
                 if (tile == Tileset.WALL) {
                     for (double h = 0; h < 2.0; h += 0.5) {
@@ -603,28 +609,20 @@ public class Interactivity {
         StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE - 2));
     }
 
-    private void drawSigntMode() {
-        Position p = generator.getAvatar();
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-//      计算当前格子 (x, y) 到小人 (p.x, p.y) 的欧几里得距离
-                double dist = Math.sqrt(Math.pow(x - p.x(), 2) + Math.pow(y - p.y(), 2));
-                if (dist < nowSight) {
-                    world[x][y].draw(x, y);
-                } else {
-                    Tileset.NOTHING.draw(x, y);
+    private void drawTopDownWorld() {
+        StdDraw.clear(Color.BLACK);
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                if (sightMode) {
+                    Position avatar = generator.getAvatar();
+                    double dist = Math.sqrt(Math.pow(x - avatar.x(), 2) + Math.pow(y - avatar.y(), 2));
+                    if (dist >= nowSight) {
+                        Tileset.NOTHING.draw(x, y);
+                        continue;
+                    }
                 }
-            }
-        }
-    }
-
-    private void drawTilesOnly() {
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                if (world[x][y] == null) {
-                    continue;
-                }
-//      每一个 Tile 都有自己的 draw 方法
                 world[x][y].draw(x, y);
             }
         }
