@@ -24,6 +24,7 @@ public class Interactivity {
     private int nowSight = 5;
     private boolean sightMode = true;
     private boolean showEnemyPath = false;
+    private boolean allowShowEnemyPath = true;
     private boolean savingGame = false;
     private TETile[][] world;
     private TETile currentMouseTile = null;
@@ -37,6 +38,7 @@ public class Interactivity {
     private GameState currentState = GameState.MENU;
     private static final Set<Character> NUMBERS =
             Set.of('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+    private ViewMode currentView = ViewMode.TOP_DOWN;
 
     public Interactivity() {
     }
@@ -45,6 +47,8 @@ public class Interactivity {
         this.generator = generator;
         this.random = new Random(generator.getSeed());
     }
+
+    public enum ViewMode { TOP_DOWN, ISOMETRIC}
 
     void setKeysTyped(String keysTyped) {
         this.keysTyped = keysTyped;
@@ -67,6 +71,8 @@ public class Interactivity {
     }
 
     public void showTileMessage(TETile tile) {
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
         StdDraw.setPenColor(Color.WHITE);
         StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE));
         StdDraw.textLeft(1, HEIGHT - 0.5, tile.description());
@@ -114,7 +120,15 @@ public class Interactivity {
                 lastKey = 't';
             }
             case 'e', 'E' -> {
-                showEnemyPath = !showEnemyPath;
+                allowShowEnemyPath = !allowShowEnemyPath;
+                lastKey = 'e';
+            }
+            case 'v', 'V' -> {
+                if (currentView == ViewMode.TOP_DOWN) {
+                    currentView = ViewMode.ISOMETRIC;
+                } else {
+                    currentView = ViewMode.TOP_DOWN;
+                }
                 lastKey = 'e';
             }
             case ':' -> lastKey = ':';
@@ -134,10 +148,12 @@ public class Interactivity {
         }
         keysTyped += nextKeyTyped;
         if (WorldGenerator.inRange(target.x(), target.y()) && canChangeAvatar(target) && target != avatar) {
-            if (world[avatar.x()][avatar.y()] == enemyTile) {
-                world[avatar.x()][avatar.y()] = Tileset.FLOOR;
-                currentState = GameState.QUIT;
-                return;
+            for (Enemy enemy : enemies) {
+                if (avatar.equals(enemy.position())) {
+                    world[avatar.x()][avatar.y()] = Tileset.FLOOR;
+                    currentState = GameState.QUIT;
+                    return;
+                }
             }
             changeAvatarTEtile(target);
             updateAllPath(generator.getAvatar());
@@ -173,11 +189,13 @@ public class Interactivity {
         this.totalTicks = 0;
         this.enemies.clear();
         this.showEnemyPath = false;
+        this.allowShowEnemyPath = true;
         this.savingGame = false;
         this.sightMode = true;
         this.currentMouseTile = null;
         this.lastKey = '.';
         this.keysTyped = "";
+        this.currentView = ViewMode.TOP_DOWN;
     }
 
     public void loadGame() {
@@ -302,6 +320,8 @@ public class Interactivity {
     }
 
     private void drawSettlementPage(String state) {
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
         StdDraw.setFont(new Font("Monaco", Font.BOLD, 5 * TILE_SIZE));
         if (state.equals("WIN")) {
             StdDraw.setPenColor(Color.GREEN);
@@ -347,7 +367,7 @@ public class Interactivity {
     private void drawStart() {
         StdDraw.setPenColor(StdDraw.WHITE);
         StdDraw.setFont(new Font("Monaco", Font.BOLD, 30));
-        StdDraw.text((double) WIDTH / 2, (double) HEIGHT * 3 / 4, "THE GAME");//CS61B: 
+        StdDraw.text((double) WIDTH / 2, (double) HEIGHT * 3 / 4, "THE GAME");//CS61B:
         StdDraw.setFont(new Font("Monaco", Font.PLAIN, 18));
         StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "New Game(N)");
         StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2 - 2, "Load Game(L)");
@@ -484,12 +504,15 @@ public class Interactivity {
     }
 
     private void drawEnemyPath() {
-        if (showEnemyPath) {
-            for (Enemy enemy : enemies) {
-                StdDraw.setPenColor(Color.green);
-                for (Position p : enemy.path()) {
-                    if (!p.equals(generator.getAvatar()) && !p.equals(enemy.position())) {
-                        StdDraw.filledCircle(p.x() + 0.5, p.y() + 0.5, 0.15);
+        if (allowShowEnemyPath) {
+            temporaryShowPath();
+            if (showEnemyPath) {
+                for (Enemy enemy : enemies) {
+                    StdDraw.setPenColor(Color.green);
+                    for (Position p : enemy.path()) {
+                        if (!p.equals(generator.getAvatar()) && !p.equals(enemy.position())) {
+                            StdDraw.filledCircle(p.x() + 0.5, p.y() + 0.5, 0.15);
+                        }
                     }
                 }
             }
@@ -502,7 +525,11 @@ public class Interactivity {
         }
     }
 
-    private void drawTile() {
+    private void drawTopDown() {
+        StdDraw.clear(Color.BLACK);
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
+        this.allowShowEnemyPath = true;
         if (sightMode) {
             drawSigntMode();// 盖上阴影（在缓冲区）
         } else {
@@ -510,15 +537,43 @@ public class Interactivity {
         }
     }
 
+    private void drawWorld() {
+        switch (currentView) {
+            case TOP_DOWN -> drawTopDown();
+            case ISOMETRIC -> drawIsometric();
+        }
+    }
+
+    private void drawIsometric() {
+        this.allowShowEnemyPath = false;
+        StdDraw.clear(Color.BLACK);
+        double zoom = 0.8;
+        StdDraw.setXscale(-WIDTH * zoom, WIDTH * zoom);
+        StdDraw.setYscale(-HEIGHT * zoom, HEIGHT * zoom);
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = HEIGHT - 1; y >= 0; y -= 1) {
+                double screenX = (x - y) * zoom - (double) WIDTH / 6;
+                double screenY = (x + y) * zoom / 2 - (double) HEIGHT * 3 / 5;
+                TETile tile = world[x][y];
+                if (tile == Tileset.WALL) {
+                    for (double h = 0; h < 2.0; h += 0.5) {
+                        tile.draw(screenX, screenY + h);
+                    }
+                    Tileset.WALL.draw(screenX, screenY + 2.0);
+                } else {
+                    tile.draw(screenX, screenY);
+                }
+            }
+        }
+    }
+
     public void startGame() {
         while (currentState == GameState.PLAYING) {
             enemyLogic();
             moveAvatarKeyboard();
-//          2. 开始这一帧的绘制
-            drawTile();
-            temporaryShowPath();
+            drawWorld();
             drawEnemyPath();
-            checkMouse();     // 画 HUD 文字（在缓冲区）
+            checkMouse();
             drawTime();
             StdDraw.show();
             StdDraw.pause(10);
@@ -539,6 +594,8 @@ public class Interactivity {
     }
 
     private void drawTime() {
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
         int time = (MAX_TICKS - totalTicks) / 100;
         StdDraw.setPenColor(Color.YELLOW);
         StdDraw.setFont(new Font("Monaco", Font.PLAIN, 2 * TILE_SIZE));
