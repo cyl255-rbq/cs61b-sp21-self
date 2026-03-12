@@ -1,0 +1,66 @@
+@Override
+public boolean equals(Object obj) {
+    // 自反性：如果比较的是同一个对象，返回 true
+    if (this == obj) {
+        return true;
+    }
+    // 如果 obj 为 null，或者类型不同，返回 false
+    if (obj == null || getClass() != obj.getClass()) {
+        return false;
+    }
+    // 类型转换后比较每个字段
+    Position other = (Position) obj;
+    return x == other.x && y == other.y;
+}
+
+@Override
+public int hashCode() {
+    // 根据 x 和 y 生成哈希码（可以使用 Objects.hash 方法）
+    return Objects.hash(x, y);
+}
+
+
+equals()：首先检查引用是否相同，再检查类型和 null，最后比较字段值。
+hashCode()：使用 Objects.hash() 可以基于所有字段生成一个合理的哈希码，确保相同的对象返回相同的哈希值。
+
+
+为什么必须重写 hashCode()？
+Object 类的 hashCode() 方法有这样的约定（摘自 Java 文档）：
+    一致性：在程序的一次执行过程中，同一个对象的 hashCode() 必须始终返回相同的整数，前提是对象用于 equals 比较的信息没有被修改。
+    equals 相等则 hashCode 必须相等：如果两个对象根据 equals() 方法相等，那么对这两个对象调用 hashCode() 必须返回相同的整数结果。
+    equals 不等时 hashCode 不必不等：如果两个对象根据 equals() 不相等，不要求它们的 hashCode() 必须不同；但为不同对象产生不同哈希值可以提高哈希表的性能。
+
+
+正确重写 hashCode() 的示例（针对 Position 类）
+java
+
+@Override
+public int hashCode() {
+    return Objects.hash(x, y); // 使用工具方法生成基于字段的哈希码
+}
+
+或者手动计算一个简单的组合：
+java
+
+@Override
+public int hashCode() {
+    int result = 17; // 随意选取的素数
+    result = 31 * result + x;
+    result = 31 * result + y;
+    return result;
+}
+
+
+
+
+如果两个对象 hashCode 相等但 equals 不等，HashSet 还能存进去吗？
+可以存进去。 这正是哈希冲突时的正常处理流程。
+HashSet 的存储机制
+HashSet 内部使用 HashMap，每个元素作为键存入。流程如下：
+    计算元素的 hashCode，确定它应该放在哪个桶（bucket）中（桶是数组的一个位置）。
+    如果该桶为空，直接放入。
+    如果该桶已有元素（即发生了哈希冲突），则用 equals 方法将新元素与桶内所有元素逐一比较：
+        如果存在任意一个元素与它 equals 相等，则认为元素已存在，不存入。
+        如果全部 equals 都不相等，则将新元素加入该桶（可能以链表或红黑树形式链接）。
+所以，哈希码相等只是让它们进入同一个桶，最终是否重复由 equals 决定。因此：
+    允许：两个不同的对象（equals 为 false）拥有相同的哈希码（碰撞），它们可以共存于同一个 HashSet。

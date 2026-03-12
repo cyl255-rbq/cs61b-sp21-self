@@ -1,0 +1,33 @@
+public class DepthFirstPaths {
+	private boolean[] marked; //marked[v] is true if v connected to s
+	private int[] edgeTo; //edgeTo[v] is previous vertex on path from s to v
+	private int s;
+public DepthFirstPaths(Graph G, int s){
+	...		//not shown: data structure initialization
+	dfs(G, s); //find vertices connected to s.
+}
+private void dfs(Graph G, int v) {
+	marked[v] = true;		//recursive routine does the work and stores results in an easy to query manner!
+	for (int w :G.adj(v)){
+		if （!marked[w]） {
+			edgeTo[w] = v;
+			dfs(G, w);
+		}
+	}
+	...
+}
+
+public Iterable<Integer> pathTo(int v) {
+	if (!hasPathTo(v)) return null;
+	List<Integer> path = new ArrayList<>();
+	for （int x = v; x != S; x = edgeTo[x]） {
+		path.add(x);
+	}
+	path.add(s);
+	Collections.reverse(path);
+	return path;
+}
+
+public boolean hasPathTo(int v) {
+	return marked[v];
+}

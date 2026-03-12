@@ -1,0 +1,55 @@
+import java.util.Comparator;
+
+public class PositionComparator implements Comparator<Position> {
+    @Override
+    public int compare(Position p1, Position p2) {
+        // 先按 x 比较
+        if (p1.x != p2.x) {
+            return Integer.compare(p1.x, p2.x); // 升序：p1.x < p2.x 返回负数
+        }
+        // x 相同则按 y 比较
+        return Integer.compare(p1.y, p2.y);
+    }
+}
+
+外面有很多库已经使用了scomparable接口
+所以，例如，max已经为我们写好，你可能已经想到了
+所以有一个叫collection的库
+你可以调用collection.max，给它一个狗的数组，只要那些狗实现了comparable，它就会找到最大的狗
+Dog[] dogs=new Dog[]{d1, d2, d3};
+Dogg largest = Collection.max(dogs);
+
+“自然顺序”一词有时被用来指代由Comparable的compareTo方法隐含的排序。
+例如：根据我们的定义，Dog对象有一个由它们的大小决定的自然顺序。
+现在有时候，你可能实际上想以不同的方式对它们进行排序
+所以也许你想按字母顺序排序，因为它们都在同一个班级
+Java采用的方法是传递一个对象，该对象的类型为comparator of t
+comparator<T> c
+
+所以在Java中，有一种东西叫做比较器。
+因为它是一个对象，我们将使用它的方式实际上是在dog 内部创建一个实现比较器的嵌套类。
+所以在这种情况下，我们将有
+public static class NameComparator implements Comparator<Dog> {
+	public int compare（Dog a，Dog b) {-------->如果你看这里，你会注意到这并没有使用狗的任何实例变量。所以把这个lass NameComparator 设为static(只有内部类可以设为static，代表不需要外部类的实例就能创建内部类的实例)
+		return a.name.compareTo(b.name);
+	}
+}
+所以我们向世界宣告，namecomparator是一种知道如何比较狗的对象类型
+必须带有import java.util.comparator；
+这个接口要求我们实现int compare（T o1，T o2）;
+Dog.NameComparator nc = new Dog.NameComparator();
+if（nc.compare（d1，d3）> 0) {
+	d1.bark();
+} else{
+	d3.bark();
+}
+现在，我在这里要做一个小小的改动，只是为了反映Java代码通常的写法。
+我们通常不会写newDog.NameComparator()
+
+所以，我要做的是进入dog 类。实际上，我要把这个类设为私有，然后，我要创建一个返回狗比较器
+private static class NameComparator implements Comparator<Dog>
+public static Comparator<Dog> getNameComparator(）{
+	return new NameComparator();
+}
+
+所以只要加多个内部类，就可以实现多种不同的比较方法

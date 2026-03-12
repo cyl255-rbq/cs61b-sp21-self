@@ -1,0 +1,8 @@
+1秒为1000毫秒 1毫秒=0.001秒
+10毫秒 = 0.01秒
+每10毫秒，totalticks +=1
+totalticks == 100的时候，这时候过了1s
+
+倒计时逻辑分为两个，一个是keyborad，每pause(10)，ticks+=1(这里是因为，moveAvatarKeyboard(),如果动了则keystyped+那个键，没动则+".")
+所以无论如何都ticks+=1，然后load即sting的时候，读取.txt，每个移动都ticks+=1，对应上面，因为即使不动也会记录"."，即用空字符记录发呆
+

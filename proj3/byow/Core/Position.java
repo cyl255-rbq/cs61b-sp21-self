@@ -1,5 +1,7 @@
 package byow.Core;
 
+import java.util.Objects;
+
 public class Position {
     int x;
     int y;
@@ -15,6 +17,23 @@ public class Position {
 
     public int y() {
         return this.y;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Position other = (Position) obj;
+        return x == other.x && y == other.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 
     public Position shiftPosition(int xCoord, int yCoord) {

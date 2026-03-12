@@ -25,6 +25,10 @@ public class WorldGenerator {
         this.world = new TETile[WIDTH][HEIGHT];
     }
 
+    long getSeed() {
+        return this.seed;
+    }
+
     Position getAvatarPosition() {
         return this.avatar;
     }
@@ -278,6 +282,18 @@ public class WorldGenerator {
                 && height >=0 && height < HEIGHT;
     }
 
+    private static boolean positionInRange(Position p) {
+        return WorldGenerator.inRange(p.x(), p.y());
+    }
+
+    private static boolean placeCanMove(TETile[][] world,  Position p){
+        return world[p.x()][p.y()] != Tileset.NOTHING && world[p.x()][p.y()] != Tileset.WALL;
+    }
+
+    public static boolean couldBeNeighbour(TETile[][] world,  Position p) {
+        return positionInRange(p) && placeCanMove(world, p);
+    }
+
     private boolean aroundFloor(TETile[][] tiles, int width, int height) {
         for (int h = -1; h < 2; h += 1) {
             for (int w = -1; w < 2; w += 1) {
@@ -369,7 +385,7 @@ public class WorldGenerator {
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(80, 30);
-        Interactivity b = new Interactivity(ter);
+        Interactivity b = new Interactivity();
 
     }
 }

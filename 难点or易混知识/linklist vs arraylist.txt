@@ -1,0 +1,17 @@
+在现代 Java 开发中，90% 以上的场景你都应该闭着眼睛选 ArrayList。
+LinkedList 在理论上（教科书上）很美好，但在现代计算机架构（CPU 缓存）面前，它的表现往往令人失望。不过，它确实有几个“反杀”的特定主场：
+1. 理论 vs 现实：为什么 ArrayList 常用？
+    CPU 缓存友好（Spatial Locality）：ArrayList 是连续内存，CPU 预取数据时能一抓一大把。
+    LinkedList 的痛点：它的节点散落在内存各处，CPU 每次找下一个节点都要重新“寻址”，这叫 Cache Miss，非常耗时。
+2. LinkedList 表现更好的 3 个场景
+虽然被嫌弃，但在以下情况，LinkedList 还是能扬眉吐气的：
+A. 频繁在“两头”操作 (Deque 角色)
+LinkedList 实现了 Deque（双端队列）接口。
+    如果你需要频繁执行 addFirst()、removeFirst() 或者 addLast()。
+    ArrayList 的尴尬：在开头插入元素，ArrayList 必须把后面所有元素往后挪一位，时间复杂度是 O(n)；而 LinkedList 只需要改改指针，是真正的 O(1)。
+B. 配合 Iterator 执行大量删除操作
+如果你正在用 Iterator 遍历一个巨大的列表，并且在遍历过程中不断删掉当前元素。
+    LinkedList：只要指针指到了，删掉它就是改个指向的事，O(1)。
+    ArrayList：每删一个，后面的都要集体前移。
+C. 内存极其破碎的情况
+ArrayList 需要一大块连续的内存空间。如果你内存里全是小碎片，虽然总数够，但凑不出一个大长条，ArrayList 就会申请失败。而 LinkedList 像“散装货”，哪里有空位就能钻哪里。

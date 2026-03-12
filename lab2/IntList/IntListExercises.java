@@ -65,7 +65,7 @@ public class IntListExercises {
      * element of the IntList.
      *
      * @param lst IntList from Lecture
-     * @return True if there was an update to the list
+     * @return True if there was an updatePath to the list
      */
     public static boolean squarePrimes(IntList lst) {
         // Base Case: we have reached the end of the list

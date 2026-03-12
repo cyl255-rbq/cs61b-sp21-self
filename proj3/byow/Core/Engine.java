@@ -25,7 +25,7 @@ public class Engine {
      */
     public void interactWithKeyboard() {
         ter.initialize(WIDTH, HEIGHT);
-        Interactivity interactivity = new Interactivity(ter);
+        Interactivity interactivity = new Interactivity();
         interactivity.runGameLoop();
     }
 
@@ -60,7 +60,7 @@ public class Engine {
 //WorldGenerator newWorld = new WorldGenerator(WIDTH, HEIGHT, newInput);
         Interactivity interactivity = getInteractivity(newInput);
         String fullInput = this.input;
-        int sIndex = Math.max(fullInput.indexOf('S'), fullInput.indexOf('s'));
+        int sIndex = getIndex(fullInput);
         String commands = fullInput.substring(sIndex + 1);
         int index = 0;
         while (index < commands.length() && !interactivity.isGameOver()) {
@@ -70,6 +70,18 @@ public class Engine {
         }
         this.world = interactivity.getWorld();
         return this.world;
+    }
+
+    public static int getIndex(String input) {
+        int S = input.indexOf('S');
+        int s = input.indexOf('s');
+        if (S == -1) {
+            return s;
+        } else if (s == -1) {
+            return S;
+        } else {
+            return Math.min(S, s);
+        }
     }
 
     public WorldGenerator getGenerator() {
@@ -83,11 +95,11 @@ public class Engine {
             fullString = readContentsAsString(save).replaceAll("(?i):q", "")
                     + newInput.substring(1);
         }
-        int end = Math.max(fullString.indexOf('S'), fullString.indexOf('s'));
+        int end = Math.min(fullString.indexOf('S'), fullString.indexOf('s'));
         String seedStr = fullString.substring(1, end).replaceAll("[^0-9]", "");
         long seed = Long.parseLong(seedStr);
         this.generator = new WorldGenerator(seed);
-        Interactivity interactivity = new Interactivity(ter, this.getGenerator());
+        Interactivity interactivity = new Interactivity(this.getGenerator());
         interactivity.setSeed(seedStr);
         interactivity.setWorld(this.getGenerator().generate());
         interactivity.setKeysTyped("n" + seedStr + "s");

@@ -1,0 +1,31 @@
+public class Graph {
+	private final int V;
+	privateList<Integer>[] adj;
+
+	public Graph(int V) {
+		this.V = V;
+		adj = (List<Integer>[]) new ArrayList[V];
+		for（int v = θ;v < V;v++）{
+			adj[v] = new ArrayList<Integer>();
+		}
+	}
+
+	public void addEdge(int v, int w){
+		adj[v].add(w); adj[w].add(v);
+	}
+
+	public Iterable<Integer> adj(int v) {
+		return adj[v];
+	}
+}
+将图类和路径类解耦，路径类输入一个图，在路径类的构造函数中完成所有工作，简单来说就是让路径充分了解这个图所有信息，然后根据
+函数，返回你想问的
+Start by calling: Paths P = new Paths(G, 0);
+	P.hasPathTo(3);	 //returns	true
+	P.pathTo(3); 	//returns	{0, 1, 4, 3}
+
+public class Paths {
+	public Paths(Graph G, int s):	 Find all paths from G
+	boolean hasPathTo(int v):		 is there a path from s to v?
+	Iterable<Integer> pathTo(int v): path from s to v (if any)
+}
