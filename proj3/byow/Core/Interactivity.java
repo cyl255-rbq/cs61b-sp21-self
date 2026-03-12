@@ -544,6 +544,25 @@ public class Interactivity {
         return (x + y) * ZOOM / 2 - (double) HEIGHT * 3 / 5;
     }
 
+    private void drawTopDownWorld() {
+        StdDraw.clear(Color.BLACK);
+        StdDraw.setXscale(0, WIDTH);
+        StdDraw.setYscale(0, HEIGHT);
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                if (sightMode) {
+                    Position avatar = generator.getAvatar();
+                    double dist = Math.sqrt(Math.pow(x - avatar.x(), 2) + Math.pow(y - avatar.y(), 2));
+                    if (dist >= nowSight) {
+                        Tileset.NOTHING.draw(x, y);
+                        continue;
+                    }
+                }
+                world[x][y].draw(x, y);
+            }
+        }
+    }
+
     private void drawIsometricWorld() {
         StdDraw.clear(Color.BLACK);
         StdDraw.setXscale(-WIDTH * ZOOM, WIDTH * ZOOM);
@@ -561,14 +580,7 @@ public class Interactivity {
                     }
                 }
                 TETile tile = world[x][y];
-                if (tile == Tileset.WALL) {
-                    for (double h = 0; h < 2.0; h += 0.5) {
-                        tile.draw(screenX, screenY + h);
-                    }
-                    Tileset.WALL.draw(screenX, screenY + 2.0);
-                } else {
-                    tile.draw(screenX, screenY);
-                }
+                tile.draw(screenX, screenY);
             }
         }
     }
@@ -607,25 +619,6 @@ public class Interactivity {
         StdDraw.setFont(new Font("Monaco", Font.PLAIN, 2 * TILE_SIZE));
         StdDraw.textRight(WIDTH / 2, HEIGHT - 1, Integer.toString(time));
         StdDraw.setFont(new Font("Monaco", Font.BOLD, TILE_SIZE - 2));
-    }
-
-    private void drawTopDownWorld() {
-        StdDraw.clear(Color.BLACK);
-        StdDraw.setXscale(0, WIDTH);
-        StdDraw.setYscale(0, HEIGHT);
-        for (int x = 0; x < WIDTH; x += 1) {
-            for (int y = 0; y < HEIGHT; y += 1) {
-                if (sightMode) {
-                    Position avatar = generator.getAvatar();
-                    double dist = Math.sqrt(Math.pow(x - avatar.x(), 2) + Math.pow(y - avatar.y(), 2));
-                    if (dist >= nowSight) {
-                        Tileset.NOTHING.draw(x, y);
-                        continue;
-                    }
-                }
-                world[x][y].draw(x, y);
-            }
-        }
     }
 
     public static void main(String[] args) {
