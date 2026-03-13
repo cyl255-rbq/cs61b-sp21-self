@@ -1,5 +1,6 @@
 package byow.Core;
 
+import byow.Networking.BYOWServer;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
@@ -39,6 +40,7 @@ public class Interactivity {
     private static final Set<Character> NUMBERS =
             Set.of('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
     private ViewMode currentView = ViewMode.TOP_DOWN;
+    private BYOWServer byowServer = null;
 
     public Interactivity() {
     }
@@ -46,6 +48,30 @@ public class Interactivity {
     public Interactivity(WorldGenerator generator) {
         this.generator = generator;
         this.random = new Random(generator.getSeed());
+    }
+
+    public void setByowServer(BYOWServer byowServer) {
+        this.byowServer = byowServer;
+    }
+
+    private void byowSeverShow() {
+        if (this.byowServer != null) {
+            byowServer.sendCanvas();
+        }
+    }
+
+    private boolean hasNextKeyTypedRemote() {
+        if (byowServer != null) {
+            return byowServer.clientHasKeyTyped();
+        } else return StdDraw.hasNextKeyTyped();
+    }
+
+    private char nextKeyTypedRemote() {
+        if (byowServer != null) {
+            return byowServer.clientNextKeyTyped();
+        } else {
+            return StdDraw.nextKeyTyped();
+        }
     }
 
     public enum ViewMode { TOP_DOWN, ISOMETRIC}
@@ -223,8 +249,8 @@ public class Interactivity {
     }
 
     public void moveAvatarKeyboard() {
-        if (StdDraw.hasNextKeyTyped()) {
-            char nextKeyTyped = StdDraw.nextKeyTyped();
+        if (hasNextKeyTypedRemote()) {
+            char nextKeyTyped = nextKeyTypedRemote();
             moveHelper(nextKeyTyped);
         } else {
             keysTyped += ".";
@@ -253,9 +279,10 @@ public class Interactivity {
     }
 
     public enum GameState { MENU, SEED_INPUT, PLAYING, QUIT, LOAD}
+
     private void clearBuffer() {
-        while (StdDraw.hasNextKeyTyped()) {
-            StdDraw.nextKeyTyped();
+        while (hasNextKeyTypedRemote()) {
+            nextKeyTypedRemote();
         }
     }
 
@@ -319,6 +346,9 @@ public class Interactivity {
                 case LOAD -> loadGame();
             }
         }
+        if (byowServer != null) {
+            byowServer.stopConnection();
+        }
     }
 
     private void drawSettlementPage(String state) {
@@ -336,6 +366,7 @@ public class Interactivity {
             StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2, "Saved successfully");
         }
         StdDraw.show();
+        byowSeverShow();
     }
 
     public void menu() {
@@ -344,10 +375,10 @@ public class Interactivity {
         clearBuffer();
         boolean nextStep = false;
         while (!nextStep) {
-            while (!StdDraw.hasNextKeyTyped()) {
+            while (!hasNextKeyTypedRemote()) {
                 StdDraw.pause(10);
             }
-            char nextValidKey = StdDraw.nextKeyTyped();
+            char nextValidKey = nextKeyTypedRemote();
             switch (nextValidKey) {
                 case 'n', 'N' -> {
                     drawSeed("");
@@ -375,6 +406,7 @@ public class Interactivity {
         StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2 - 2, "Load Game(L)");
         StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2 - 4, "Quit (Q)");
         StdDraw.show();
+        byowSeverShow();
     }
 
     private void drawSeed(String seed) {
@@ -385,6 +417,7 @@ public class Interactivity {
         StdDraw.text((double) WIDTH / 2, (double) HEIGHT / 2 - 8, seed);
         drawStart();
         StdDraw.show();
+        byowSeverShow();
     }
 
     public void checkSeedInput() {
@@ -392,10 +425,11 @@ public class Interactivity {
         boolean nextStep = false;
         String input = "";
         while (!nextStep) {
-            while (!StdDraw.hasNextKeyTyped()) {
+            while (!hasNextKeyTypedRemote()) {
                 StdDraw.pause(10);
             }
-            char nextValidKey = StdDraw.nextKeyTyped();
+
+            char nextValidKey = nextKeyTypedRemote();
             if (NUMBERS.contains(nextValidKey)) {
                 input += nextValidKey;
                 this.seed = input;
@@ -597,8 +631,12 @@ public class Interactivity {
             checkMouse();
             drawTime();
             StdDraw.show();
+            byowSeverShow();
             StdDraw.pause(10);
             totalTicks += 1;
+            if (byowServer != null) {
+                totalTicks += 1;//因为byowSeverShow耗费的时间非常的长，足够totalticks再+1了，甚至更多
+            }
         }
         if (savingGame) {
             drawSettlementPage("SAVE");

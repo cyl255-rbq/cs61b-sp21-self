@@ -1,0 +1,4 @@
+当你移动整个文件夹时，IntelliJ 记录的库文件（Libraries）路径和 JDK 路径还是之前的旧地址。即使你移回来了，它可能还没反应过来。
+    在左侧项目树（Project View）中，右键点击项目根文件夹。
+    选择 Reload from Disk。
+    如果还没好，点击顶部菜单栏的 File -> Invalidate Caches...，勾选所有选项并点击 Invalidate and Restart。这会强制 IntelliJ 清空所有过时的路径缓存。

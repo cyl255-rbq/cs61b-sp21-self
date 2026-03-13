@@ -1,8 +1,11 @@
 package byow.Core;
 
+import byow.Networking.BYOWServer;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import java.io.File;
+import java.io.IOException;
+
 import static byow.Core.Utils.join;
 import static byow.Core.Utils.readContentsAsString;
 
@@ -11,8 +14,7 @@ public class Engine {
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
-    public static final int KEYBOARD = 0;
-    public static final int STRING = 1;
+
     private TETile[][] world;
     private WorldGenerator generator;
     private String input;
@@ -110,6 +112,16 @@ public class Engine {
     @Override
     public String toString() {
         return TETile.toString(world);
+    }
+
+    public void interactWithRemoteClient(String port) throws IOException {
+        BYOWServer byowServer = new BYOWServer(Integer.parseInt(port));
+        int tileSize = 16;
+        byowServer.sendCanvasConfig(tileSize * WIDTH, tileSize * HEIGHT);
+        ter.initialize(WIDTH, HEIGHT);
+        Interactivity interactivity = new Interactivity();
+        interactivity.setByowServer(byowServer);
+        interactivity.runGameLoop();
     }
 
     public static void main(String[] args) {
