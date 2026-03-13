@@ -1,0 +1,50 @@
+public class WeightedUnionFind {
+    private int[] parent;
+
+    public WeightedUnionFind(int n) {
+        parent = new int[n];
+        // 初始全是 -1，表示每个人都是根节点，且所属集合大小为 1
+        for (int i = 0; i < n; i++) {
+            parent[i] = -1;
+        }
+    }
+
+    // 找到根节点（带路径压缩）
+    public int find(int i) {
+        // 如果值是负数，说明我就是根节点
+        if (parent[i] < 0) {
+            return i;
+        }
+        // 路径压缩：递归寻找并将结果存回 parent[i]
+        parent[i] = find(parent[i]);
+        return parent[i];
+    }
+
+    // 得到某个集合的大小
+    public int sizeOf(int i) {
+        return -parent[find(i)];
+    }
+
+    public void union(int i, int j) {
+        int rootI = find(i);
+        int rootJ = find(j);
+        
+        if (rootI != rootJ) {
+            // 比较大小（注意这里是负数比较，所以数值小的反而人多）
+            // 例如 parent[rootI] = -5, parent[rootJ] = -2
+            if (parent[rootI] <= parent[rootJ]) {
+                // I 帮派人更多，J 合并进 I
+                parent[rootI] += parent[rootJ]; // 更新新帮派的总人数
+                parent[rootJ] = rootI;          // J 认 I 为老大
+            } else {
+                // J 帮派人更多，I 合并进 J
+                parent[rootJ] += parent[rootI];
+                parent[rootI] = rootJ;
+            }
+        }
+    }
+
+    public boolean connected(int i, int j) {
+        return find(i) == find(j);
+    }
+}

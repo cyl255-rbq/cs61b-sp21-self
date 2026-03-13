@@ -1,0 +1,56 @@
+public List<Edge> generateMST(List<Position> roomCenters) {
+    List<Edge> allEdges = new ArrayList<>();
+    int n = roomCenters.size();
+
+    // --- 第二步：建立“潜在的连接”（两两配对） ---
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            double dist = distance(roomCenters.get(i), roomCenters.get(j));
+            allEdges.add(new Edge(i, j, dist));
+        }
+    }
+
+    // --- 第三步：Kruskal 算法 ---
+    // 1. 将所有边按距离从小到大排序
+    Collections.sort(allEdges);
+
+    UnionFind uf = new UnionFind(n);
+    List<Edge> mst = new ArrayList<>();
+
+    for (Edge e : allEdges) {
+        // 2. 如果这两个房间还不连通，就买入这条边
+        if (!uf.connected(e.u, e.v)) {
+            uf.union(e.u, e.v);
+            mst.add(e);
+        }
+        
+        // 如果边数已经达到 n-1，说明全部连通了，可以提前结束
+        if (mst.size() == n - 1) break;
+    }
+
+    return mst;
+}
+
+// 简单的欧几里得距离公式
+private double distance(Position p1, Position p2) {
+    return Math.sqrt(Math.pow(p1.x() - p2.x(), 2) + Math.pow(p1.y() - p2.y(), 2));
+}
+
+
+
+
+public class Edge implements Comparable<Edge> {
+    int u, v; // 房间的索引
+    double weight; // 欧几里得距离
+
+    public Edge(int u, int v, double weight) {
+        this.u = u;
+        this.v = v;
+        this.weight = weight;
+    }
+
+    @Override
+    public int compareTo(Edge other) {
+        return Double.compare(this.weight, other.weight);
+    }
+}

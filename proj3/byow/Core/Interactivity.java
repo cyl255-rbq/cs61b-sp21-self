@@ -292,6 +292,9 @@ public class Interactivity {
         distTo.put(start, 0);
         while (!fringe.isEmpty()) {
             PathNode curr = fringe.poll();
+            if (curr.distTo() > distTo.getOrDefault(curr.position(), Integer.MAX_VALUE)) {
+                continue;
+            }
             if (curr.position().equals(target)) {
                 return recursivePath(edgeTo, target);
             }

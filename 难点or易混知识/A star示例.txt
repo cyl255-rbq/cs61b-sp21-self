@@ -1,0 +1,95 @@
+    public List<Position> recursivePath(HashMap<Position, Position> edgeTo, Position target) {
+        List<Position> path = new ArrayList<>();
+        while (target != null) {
+            path.add(target);
+            target = edgeTo.get(target);
+        }
+        Collections.reverse(path);
+        return path;
+    }
+
+
+    public List<Position> getPath(Position start, Position target) {
+        PriorityQueue<PathNode> fringe = new PriorityQueue<>();
+        HashMap<Position, Position> edgeTo = new HashMap<>();
+        HashMap<Position, Integer> distTo = new HashMap<>();
+        fringe.add(new PathNode(start, 0, manhattan(start, target)));
+        distTo.put(start, 0);
+        while (!fringe.isEmpty()) {
+            PathNode curr = fringe.poll();
+            if (curr.distTo() > distTo.getOrDefault(curr.position(), Integer.MAX_VALUE)) {//如果这个点生成过PathNode且被距离小处理过则跳过
+                continue;//A*的优先级是dist + heuristic，Position一样所以heuristic一样
+            }
+            if (curr.position().equals(target)) {
+                return recursivePath(edgeTo, target);
+            }
+            for (Position p : getNeighbours(curr.position())) {
+                int newDist = curr.distTo() + 1;
+                if (newDist < distTo.getOrDefault(p, Integer.MAX_VALUE)) {//算法原理保证
+                    edgeTo.put(p, curr.position());
+                    distTo.put(p, newDist);
+                    fringe.add(new PathNode(p, newDist, manhattan(p, target)));
+                    //原因:fringe（优先队列）里确实会出现同一个 Position p 被添加多次的情况。 
+                    //既然 Java 标准库的 PriorityQueue 没有提供高效的 changePriority（改变优先级）方法，我们通常采用这种懒惰更新的策略。
+                }
+            }
+        }
+        return null;
+    }
+
+
+
+
+public class PathNode implements Comparable<PathNode>{
+    private int manhattan;
+    private int distTo;
+    private Position p;
+
+
+    public PathNode(Position p, int distTo, int manhattan) {
+        this.distTo = distTo;
+        this.manhattan = manhattan;
+        this.p = p;
+    }
+
+    public static int manhattan(Position start, Position target) {
+        return Math.abs(start.x() - target.x()) + Math.abs(start.y() - target.y());
+    }
+
+    public Position position() {
+        return this.p;
+    }
+
+    public int distTo() {
+        return this.distTo;
+    }
+
+    @Override
+    public int compareTo(PathNode o) {
+        return this.distTo + this.manhattan - o.distTo - o.manhattan;
+    }
+}
+
+
+    private HashSet<Position> getNeighbours(Position curr) {
+        HashSet<Position> neighbours = new HashSet<>();
+        HashSet<Position> around = new HashSet<>();
+        around.add(curr.shiftPosition(0,1));
+        around.add( curr.shiftPosition(0, -1));
+        around.add(curr.shiftPosition(-1, 0));
+        around.add(curr.shiftPosition(1, 0));
+        for (Position p : around) {
+            if (couldBeNeighbour(world,  p)) {
+                neighbours.add(p);
+            }
+        }
+        return neighbours;
+    }
+
+    private static boolean placeCanMove(TETile[][] world,  Position p){
+        return world[p.x()][p.y()] != Tileset.NOTHING && world[p.x()][p.y()] != Tileset.WALL;
+    }
+
+    public static boolean couldBeNeighbour(TETile[][] world,  Position p) {
+        return positionInRange(p) && placeCanMove(world, p);
+    }
